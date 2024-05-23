@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from core.window import Window
 
 
-class View(arcade.View):
+class BaseView(arcade.View):
     settings = Settings()
     background_color = Color.BACKGROUND
     window: "Window"

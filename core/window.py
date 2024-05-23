@@ -1,7 +1,7 @@
 import arcade.gui
 
 from core.settings import Settings
-from core.view.main_menu_view import MainMenuView
+from core.view.main_menu import MainMenuView
 from logger import Logger
 
 

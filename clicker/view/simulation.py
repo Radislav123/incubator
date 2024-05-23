@@ -7,7 +7,7 @@ from clicker.game_components.increment import AutoIncrementButton, IncrementButt
 from clicker.game_components.info import InfoBox, InfoButton
 from clicker.settings import Settings
 from core.ui.text import Label
-from core.view.simulation_view import SimulationView as CoreSimulationView
+from core.view.simulation import SimulationView as CoreSimulationView
 
 
 class SimulationView(CoreSimulationView):

@@ -2,7 +2,7 @@ from arcade.gui import UIOnClickEvent
 
 from core.service import Anchor
 from core.ui.button import TextureButton
-from core.view.view import View
+from core.view.base import BaseView
 
 
 class ExitButton(TextureButton):
@@ -16,7 +16,7 @@ class ExitButton(TextureButton):
         self.view.window.show_view(self.main_menu_view)
 
 
-class SimulationView(View):
+class SimulationView(BaseView):
     exit_button: ExitButton
 
     def on_show_view(self) -> None:

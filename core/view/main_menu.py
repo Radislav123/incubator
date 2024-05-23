@@ -1,10 +1,10 @@
 from arcade.gui import UIBoxLayout, UIOnClickEvent
 
-from clicker.view.simulation_view import SimulationView as ClickerSimulationView
+from clicker.view.simulation import SimulationView as ClickerSimulationView
 from core.ui.button import TextureButton
-from core.view.menu_view import MenuView
-from core.view.simulation_view import SimulationView
-from simple_clicker.view.simulation_view import SimulationView as SimpleClickerSimulationView
+from core.view.menu import MenuView
+from core.view.simulation import SimulationView
+from simple_clicker.view.simulation import SimulationView as SimpleClickerSimulationView
 
 
 class GameButton(TextureButton):
