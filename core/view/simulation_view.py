@@ -6,7 +6,7 @@ from core.view.view import View
 
 
 class ExitButton(TextureButton):
-    def __init__(self, view: "GameView", **kwargs) -> None:
+    def __init__(self, view: "SimulationView", **kwargs) -> None:
         super().__init__(text = "Выход", **kwargs)
 
         self.view = view
@@ -16,7 +16,7 @@ class ExitButton(TextureButton):
         self.view.window.show_view(self.main_menu_view)
 
 
-class GameView(View):
+class SimulationView(View):
     exit_button: ExitButton
 
     def on_show_view(self) -> None:

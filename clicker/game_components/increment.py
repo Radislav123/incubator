@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 
 class IncrementButton(TextureButton):
-    def __init__(self, increment: float, view: "GameView", **kwargs) -> None:
+    def __init__(self, increment: float, view: "SimulationView", **kwargs) -> None:
         self.increment = increment
         self.view = view
         super().__init__(text = str(increment), **kwargs)
@@ -21,7 +21,7 @@ class IncrementButton(TextureButton):
 
 
 class AutoIncrementButton(TextureButton):
-    def __init__(self, auto_increment: float, view: "GameView", **kwargs) -> None:
+    def __init__(self, auto_increment: float, view: "SimulationView", **kwargs) -> None:
         self.auto_increment = auto_increment
         self.upgrade_cost = self.auto_increment
         # увеличение цены улучшения после очередного улучшения

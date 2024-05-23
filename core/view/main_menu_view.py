@@ -1,14 +1,14 @@
 from arcade.gui import UIBoxLayout, UIOnClickEvent
 
+from clicker.view.simulation_view import SimulationView as ClickerSimulationView
 from core.ui.button import TextureButton
-from core.view.game_view import GameView
 from core.view.menu_view import MenuView
-from simple.view import GameView as SimpleGameView
-from morel_buttons.view import GameView as MoreButtonsGameView
+from core.view.simulation_view import SimulationView
+from simple_clicker.view.simulation_view import SimulationView as SimpleClickerSimulationView
 
 
 class GameButton(TextureButton):
-    def __init__(self, view: GameView, **kwargs) -> None:
+    def __init__(self, view: SimulationView, **kwargs) -> None:
         super().__init__(width = 200, height = 50, **kwargs)
         self.view = view
 
@@ -20,7 +20,7 @@ class MainMenuView(MenuView):
     def __init__(self) -> None:
         super().__init__()
 
-        self.app_views = (SimpleGameView(), MoreButtonsGameView())
+        self.app_views = (SimpleClickerSimulationView(), ClickerSimulationView())
 
     def construct_app_buttons(self) -> None:
         layout = UIBoxLayout()

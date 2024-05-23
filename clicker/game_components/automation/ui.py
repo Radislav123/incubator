@@ -3,16 +3,16 @@ from typing import TYPE_CHECKING
 import PIL.Image
 from arcade.gui import UIOnClickEvent
 
+from clicker.game_components.automation.logic import Logic
+from clicker.settings import Settings
 from core.service import Anchor, Color
 from core.texture import Texture
 from core.ui.button import TextureButton
 from core.ui.layout import BoxLayout
-from morel_buttons.game_components.automation.logic import Logic
-from morel_buttons.settings import Settings
 
 
 if TYPE_CHECKING:
-    from morel_buttons.view.game_view import GameView
+    from clicker.view.game_view import GameView
 
 BUTTON_DEFAULT_TEXTURES = {
     True: {
@@ -37,7 +37,7 @@ BUTTON_DEFAULT_TEXTURES = {
 
 
 class AutomationBox(BoxLayout):
-    def __init__(self, automation_buttons: list["AutomationButton"], view: "GameView", **kwargs) -> None:
+    def __init__(self, automation_buttons: list["AutomationButton"], view: "SimulationView", **kwargs) -> None:
         super().__init__(**kwargs)
         self.automation_buttons = automation_buttons
         self.view = view
@@ -61,7 +61,7 @@ class Button(TextureButton):
     button_image_path: str
     default_textures_changed = False
 
-    def __init__(self, view: "GameView", **kwargs) -> None:
+    def __init__(self, view: "SimulationView", **kwargs) -> None:
         self.view = view
         self.init_default_textures()
         kwargs.update(self.get_textures_init())
@@ -90,7 +90,7 @@ class Button(TextureButton):
 
 
 class AutomationButton(Button):
-    def __init__(self, logic: Logic, view: "GameView", **kwargs) -> None:
+    def __init__(self, logic: Logic, view: "SimulationView", **kwargs) -> None:
         self.logic = logic
         super().__init__(view, **kwargs)
 

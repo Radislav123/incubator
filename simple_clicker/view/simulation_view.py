@@ -1,12 +1,12 @@
 from arcade.gui import UIOnClickEvent
 
 from core.ui.button import TextureButton
-from core.view import GameView as CoreGameView
-from simple.view.view import View
+from core.view.simulation_view import SimulationView as CoreSimulationView
+from simple_clicker.settings import Settings
 
 
 class ScoreButton(TextureButton):
-    def __init__(self, view: "GameView", **kwargs) -> None:
+    def __init__(self, view: "SimulationView", **kwargs) -> None:
         self.view = view
         super().__init__(text = str(self.view.score), **kwargs)
 
@@ -15,7 +15,9 @@ class ScoreButton(TextureButton):
         self.text = self.view.score
 
 
-class GameView(View, CoreGameView):
+class SimulationView(CoreSimulationView):
+    settings = Settings()
+
     score: int
     score_button: ScoreButton
 

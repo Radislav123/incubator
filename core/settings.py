@@ -2,7 +2,7 @@ import logging
 
 
 class Settings:
-    PROJECT_NAME = "clickers"
+    PROJECT_NAME = "incubator"
     APP_NAME = "core"
     APP_INDEX = 0
 

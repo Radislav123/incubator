@@ -17,7 +17,7 @@ class InfoBox(BoxLayout):
     total_score_label: Label
     auto_increment_label: Label
 
-    def __init__(self, view: "GameView", **kwargs) -> None:
+    def __init__(self, view: "SimulationView", **kwargs) -> None:
         super().__init__(**kwargs)
         self.view = view
         self.visible = True
@@ -41,7 +41,7 @@ class InfoBox(BoxLayout):
 
 
 class InfoButton(TextureButton):
-    def __init__(self, view: "GameView", **kwargs) -> None:
+    def __init__(self, view: "SimulationView", **kwargs) -> None:
         super().__init__(**kwargs)
         self.view = view
 

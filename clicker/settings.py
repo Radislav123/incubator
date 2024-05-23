@@ -2,7 +2,7 @@ from core.settings import Settings as CoreSettings
 
 
 class Settings(CoreSettings):
-    APP_NAME = "more_buttons"
+    APP_NAME = "clicker"
     APP_INDEX = 2
 
     def __init__(self) -> None:

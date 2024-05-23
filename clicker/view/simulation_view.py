@@ -1,16 +1,18 @@
 from arcade.gui import UIBoxLayout
 
-from core.ui.text import Label
-from core.view import GameView as CoreGameView
-from morel_buttons.game_components.automation.logic import AutoClicker, AutoUpgrader, Logic
-from morel_buttons.game_components.automation.ui import AutoClickButton, AutoUpgradeButton, AutomationBox, \
+from clicker.game_components.automation.logic import AutoClicker, AutoUpgrader, Logic
+from clicker.game_components.automation.ui import AutoClickButton, AutoUpgradeButton, AutomationBox, \
     AutomationBoxButton, AutomationButton
-from morel_buttons.game_components.increment import AutoIncrementButton, IncrementButton
-from morel_buttons.game_components.info import InfoBox, InfoButton
-from morel_buttons.view.view import View
+from clicker.game_components.increment import AutoIncrementButton, IncrementButton
+from clicker.game_components.info import InfoBox, InfoButton
+from clicker.settings import Settings
+from core.ui.text import Label
+from core.view.simulation_view import SimulationView as CoreSimulationView
 
 
-class GameView(View, CoreGameView):
+class SimulationView(CoreSimulationView):
+    settings = Settings()
+
     score: float
     displayed_score: str
     total_score: float

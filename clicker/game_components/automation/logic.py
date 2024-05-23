@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 
 class Logic:
-    def __init__(self, view: "GameView", period: float) -> None:
+    def __init__(self, view: "SimulationView", period: float) -> None:
         self.enabled = False
         self.view = view
         self.period = period
