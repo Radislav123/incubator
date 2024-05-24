@@ -10,7 +10,7 @@ from core.ui.text import Label
 
 
 if TYPE_CHECKING:
-    from morel_buttons.view.game_view import GameView
+    from clicker.view.simulation import SimulationView
 
 
 class InfoBox(BoxLayout):

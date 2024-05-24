@@ -6,7 +6,7 @@ from core.ui.button import TextureButton
 
 
 if TYPE_CHECKING:
-    from morel_buttons.view.game_view import GameView
+    from clicker.view.simulation import SimulationView
 
 
 class IncrementButton(TextureButton):

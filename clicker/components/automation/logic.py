@@ -6,7 +6,7 @@ from arcade.gui import UIOnClickEvent
 
 
 if TYPE_CHECKING:
-    from morel_buttons.view import GameView
+    from clicker.view.simulation import SimulationView
 
 
 class Logic:
