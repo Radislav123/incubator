@@ -4,6 +4,7 @@ from clicker.view.simulation import SimulationView as ClickerSimulationView
 from core.ui.button import TextureButton
 from core.view.menu import MenuView
 from core.view.simulation import SimulationView
+from gravity_simulator.view.simulation import SimulationView as GravitySimulationView
 from simple_clicker.view.simulation import SimulationView as SimpleClickerSimulationView
 
 
@@ -20,7 +21,11 @@ class MainMenuView(MenuView):
     def __init__(self) -> None:
         super().__init__()
 
-        self.app_views = (SimpleClickerSimulationView(), ClickerSimulationView())
+        self.app_views = (
+            SimpleClickerSimulationView(),
+            ClickerSimulationView(),
+            GravitySimulationView()
+        )
 
     def construct_app_buttons(self) -> None:
         layout = UIBoxLayout()

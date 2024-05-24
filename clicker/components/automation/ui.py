@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 import PIL.Image
 from arcade.gui import UIOnClickEvent
 
-from clicker.game_components.automation.logic import Logic
+from clicker.components.automation.logic import Logic
 from clicker.settings import Settings
 from core.service import Anchor, Color
 from core.texture import Texture
@@ -12,7 +12,7 @@ from core.ui.layout import BoxLayout
 
 
 if TYPE_CHECKING:
-    from clicker.view.game_view import GameView
+    from clicker.view.simulation import SimulationView
 
 BUTTON_DEFAULT_TEXTURES = {
     True: {

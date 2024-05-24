@@ -26,4 +26,5 @@ class Settings:
     def PRETTY_APP_NAME(self) -> str:
         # noinspection PyTypeChecker
         name = " ".join(map(str.capitalize, self.APP_NAME.split('_')))
-        return f"{name} {self.APP_INDEX}"
+        # return f"{name} {self.APP_INDEX}"
+        return name

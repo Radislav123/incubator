@@ -7,8 +7,8 @@ from logger import Logger
 
 class Window(arcade.Window):
     settings = Settings()
-    width = 800
-    height = 600
+    width = 1200
+    height = 700
 
     def __init__(self) -> None:
         super().__init__(

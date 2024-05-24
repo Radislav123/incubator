@@ -1,10 +1,10 @@
 from arcade.gui import UIBoxLayout
 
-from clicker.game_components.automation.logic import AutoClicker, AutoUpgrader, Logic
-from clicker.game_components.automation.ui import AutoClickButton, AutoUpgradeButton, AutomationBox, \
-    AutomationBoxButton, AutomationButton
-from clicker.game_components.increment import AutoIncrementButton, IncrementButton
-from clicker.game_components.info import InfoBox, InfoButton
+from clicker.components.automation.logic import AutoClicker, AutoUpgrader, Logic
+from clicker.components.automation.ui import AutoClickButton, AutoUpgradeButton, AutomationBox, AutomationBoxButton, \
+    AutomationButton
+from clicker.components.increment import AutoIncrementButton, IncrementButton
+from clicker.components.info import InfoBox, InfoButton
 from clicker.settings import Settings
 from core.ui.text import Label
 from core.view.simulation import SimulationView as CoreSimulationView
