@@ -1,3 +1,4 @@
+import copy
 import math
 from typing import Self
 
@@ -45,6 +46,10 @@ class Body(Sprite):
     def __init__(self, view: "SimulationView", *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.view = view
+        self.bordered: dict["Body", float] = {}
+
+    def __repr__(self) -> str:
+        return f"Body_{hash(self)}"
 
     # оригинал описан в PymunkPhysicsEngine.add_sprite
     def velocity_callback(self, body: pymunk.Body, gravity: tuple[float, float], damping: float, delta_time: float):
@@ -123,7 +128,7 @@ class Body(Sprite):
         max_distance = 1000
         if (self.center_x < -max_distance or self.center_x > self.view.window.width + max_distance or
                 self.center_y < -max_distance or self.center_y > self.view.window.height + max_distance):
-            self.remove_from_sprite_lists()
+            self.remove_from_simulation()
 
     def merge(self, sprite_list: list["Body"]) -> tuple[SpriteList[Self], Self, float, tuple[float, float]]:
         new_sprite_list = SpriteList()
@@ -137,6 +142,11 @@ class Body(Sprite):
 
         new_body = self.view.create_body(body_system.x, body_system.y, radius)
         return new_sprite_list, new_body, body_system.mass, body_system.impulse
+
+    def remove_from_simulation(self) -> None:
+        self.remove_from_sprite_lists()
+        for other in self.bordered:
+            del other.bordered[self]
 
 
 class SimulationView(CoreSimulationView):
@@ -173,13 +183,27 @@ class SimulationView(CoreSimulationView):
         if merge:
             new_bodies = {}
             for body in self.bodies:
-                collided = arcade.check_for_collision_with_list(body, self.bodies)
-                if len(collided) > 0:
-                    merged_list, new_body, new_body_mass, new_body_impulse = body.merge(collided)
+                collided = set(arcade.check_for_collision_with_list(body, self.bodies))
+                body_list = copy.copy(collided)
+                body_list.update(body.bordered)
+                merge_list = []
+                for other in body_list:
+                    if other in collided:
+                        if other not in body.bordered:
+                            body.bordered[other] = delta_time
+                        else:
+                            body.bordered[other] += delta_time
+                            if body.bordered[other] > 1:
+                                merge_list.append(other)
+                    else:
+                        del body.bordered[other]
+
+                if len(merge_list) > 0:
+                    merged_list, new_body, new_body_mass, new_body_impulse = body.merge(merge_list)
                     merged_list = list(merged_list)
                     new_bodies[new_body] = (new_body_mass, new_body_impulse)
                     for merged in merged_list:
-                        merged.remove_from_sprite_lists()
+                        merged.remove_from_simulation()
 
             for new_body, (new_body_mass, new_body_impulse) in new_bodies.items():
                 self.bodies.append(new_body)
@@ -202,4 +226,4 @@ class SimulationView(CoreSimulationView):
         elif button == 4:
             bodies = arcade.get_sprites_at_point((x, y), self.bodies)
             for body in bodies:
-                body.remove_from_sprite_lists()
+                body.remove_from_simulation()
