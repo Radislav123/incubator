@@ -146,7 +146,10 @@ class Body(Sprite):
     def remove_from_simulation(self) -> None:
         self.remove_from_sprite_lists()
         for other in self.bordered:
-            del other.bordered[self]
+            try:
+                del other.bordered[self]
+            except KeyError:
+                pass
 
 
 class SimulationView(CoreSimulationView):
@@ -160,6 +163,7 @@ class SimulationView(CoreSimulationView):
         super().__init__()
 
         self.adding_gravities: dict[Body, tuple[float, float]] = {}
+        self.creating_body: Body | None = None
 
     def on_show_view(self) -> None:
         super().on_show_view()
@@ -220,10 +224,31 @@ class SimulationView(CoreSimulationView):
     def on_mouse_press(self, x: int, y: int, button: int, modifiers: int) -> None:
         super().on_mouse_press(x, y, button, modifiers)
         if button == 1:
-            body = self.create_body(x, y)
-            self.bodies.append(body)
-            body.prepare_physics()
+            self.creating_body = self.create_body(x, y)
         elif button == 4:
             bodies = arcade.get_sprites_at_point((x, y), self.bodies)
             for body in bodies:
                 body.remove_from_simulation()
+
+    def on_mouse_release(self, x: int, y: int, button: int, modifiers: int) -> None:
+        super().on_mouse_release(x, y, button, modifiers)
+        if button == 1:
+            if self.creating_body is not None:
+                self.bodies.append(self.creating_body)
+
+                coeff = 1000
+                threshold = 2
+
+                impulse_x = x - self.creating_body.center_x
+                impulse_y = y - self.creating_body.center_y
+
+                if abs(impulse_x) >= threshold:
+                    impulse_x *= coeff
+                else:
+                    impulse_x = 0
+                if abs(impulse_y) >= threshold:
+                    impulse_y *= coeff
+                else:
+                    impulse_y = 0
+
+                self.creating_body.prepare_physics(impulse = (impulse_x, impulse_y))
