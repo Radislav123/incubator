@@ -6,6 +6,7 @@ from core.view.menu import MenuView
 from core.view.simulation import SimulationView
 from gravity.view.simulation import SimulationView as GravitySimulationView
 from simple_clicker.view.simulation import SimulationView as SimpleClickerSimulationView
+from snake.view.simulation import SimulationView as SnakeSimulationView
 
 
 class GameButton(TextureButton):
@@ -24,7 +25,8 @@ class MainMenuView(MenuView):
         self.app_views = (
             SimpleClickerSimulationView(),
             ClickerSimulationView(),
-            GravitySimulationView()
+            GravitySimulationView(),
+            SnakeSimulationView()
         )
 
     def construct_app_buttons(self) -> None:
