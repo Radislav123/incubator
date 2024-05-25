@@ -1,4 +1,5 @@
 import math
+from typing import Self
 
 import PIL.Image
 import arcade.hitbox
@@ -10,22 +11,27 @@ from core.view.simulation import SimulationView as CoreSimulationView
 from gravity_simulator.settings import Settings
 
 
-class MassCenter:
-    def __init__(self, view: "SimulationView", x: float = 0, y: float = 0, mass: float = 0) -> None:
-        self.view = view
-        self.x = x
-        self.y = y
-        self.mass = mass
+class BodySystem:
+    def __init__(self, bodies: SpriteList["Body"]) -> None:
+        self.bodies = bodies
+        self.x: float | None = None
+        self.y: float | None = None
+        self.mass: float | None = None
+        self.impulse: tuple[float, float] | None = None
 
     def calculate(self) -> None:
-        if len(self.view.bodies) != 0:
-            self.mass = sum(x.physics_body.mass for x in self.view.bodies)
-            self.x = sum(x.center_x * x.physics_body.mass for x in self.view.bodies) / self.mass
-            self.y = sum(x.center_y * x.physics_body.mass for x in self.view.bodies) / self.mass
+        if len(self.bodies) != 0:
+            self.mass = sum(x.physics_body.mass for x in self.bodies)
+            self.x = sum(x.center_x * x.physics_body.mass for x in self.bodies) / self.mass
+            self.y = sum(x.center_y * x.physics_body.mass for x in self.bodies) / self.mass
+            impulse_x = sum(x.physics_body.velocity[0] * x.physics_body.mass for x in self.bodies)
+            impulse_y = sum(x.physics_body.velocity[1] * x.physics_body.mass for x in self.bodies)
+            self.impulse = (impulse_x, impulse_y)
         else:
             self.mass = None
             self.x = None
             self.y = None
+            self.impulse = None
 
 
 class PhysicsEngine(PymunkPhysicsEngine):
@@ -51,13 +57,13 @@ class Body(Sprite):
         calculation_type = 1
         if calculation_type == 0:
             if len(self.view.bodies) > 1:
-                mass_center = self.view.mass_center
-                full_mass = mass_center.mass
-                system_mass = mass_center.mass - body.mass
+                body_system = self.view.body_system
+                full_mass = body_system.mass
+                system_mass = body_system.mass - body.mass
 
                 # self.physics_body == body
-                system_x = (mass_center.x * full_mass - self.center_x * body.mass) / system_mass
-                system_y = (mass_center.y * full_mass - self.center_y * body.mass) / system_mass
+                system_x = (body_system.x * full_mass - self.center_x * body.mass) / system_mass
+                system_y = (body_system.y * full_mass - self.center_y * body.mass) / system_mass
 
                 distance_x = system_x - self.center_x
                 distance_y = system_y - self.center_y
@@ -105,20 +111,32 @@ class Body(Sprite):
         # Go ahead and update velocity
         pymunk.Body.update_velocity(body, gravity, damping, delta_time)
 
-    def prepare_physics(self) -> None:
-        # килограммы
-        mass = 10000
-
+    def prepare_physics(self, mass: float = 1000, impulse: tuple[float, float] = None) -> None:
         self.view.physics_engine.add_sprite(self, mass)
         self.physics_body = self.view.physics_engine.get_physics_object(self).body
+        if impulse is not None:
+            self.physics_body.apply_impulse_at_local_point(impulse)
         self.physics_body.velocity_func = self.velocity_callback
 
     # noinspection PyMethodOverriding
     def on_update(self, delta_time: float) -> None:
-        max_distance = 5000
+        max_distance = 1000
         if (self.center_x < -max_distance or self.center_x > self.view.window.width + max_distance or
                 self.center_y < -max_distance or self.center_y > self.view.window.height + max_distance):
             self.remove_from_sprite_lists()
+
+    def merge(self, sprite_list: list["Body"]) -> tuple[SpriteList[Self], Self, float, tuple[float, float]]:
+        new_sprite_list = SpriteList()
+        new_sprite_list.append(self)
+        for body in sprite_list:
+            new_sprite_list.append(body)
+
+        body_system = BodySystem(new_sprite_list)
+        body_system.calculate()
+        radius = sum((x.width / 2)**2 for x in new_sprite_list)**(1 / 2)
+
+        new_body = self.view.create_body(body_system.x, body_system.y, radius)
+        return new_sprite_list, new_body, body_system.mass, body_system.impulse
 
 
 class SimulationView(CoreSimulationView):
@@ -126,7 +144,7 @@ class SimulationView(CoreSimulationView):
 
     bodies: SpriteList[Body]
     physics_engine: PhysicsEngine
-    mass_center: MassCenter
+    body_system: BodySystem
 
     def __init__(self) -> None:
         super().__init__()
@@ -138,7 +156,7 @@ class SimulationView(CoreSimulationView):
 
         self.bodies = SpriteList()
         self.physics_engine = PhysicsEngine()
-        self.mass_center = MassCenter(self)
+        self.body_system = BodySystem(self.bodies)
 
     def on_draw(self) -> None:
         super().on_draw()
@@ -146,22 +164,42 @@ class SimulationView(CoreSimulationView):
         # self.bodies.draw_hit_boxes(Color.RED)
 
     def on_update(self, delta_time: float) -> None:
-        self.mass_center.calculate()
+        self.body_system.calculate()
 
         self.physics_engine.step(delta_time)
         self.bodies.on_update(delta_time)
 
-    def add_body(self, x: float, y: float) -> None:
-        radius = 10
+        merge = True
+        if merge:
+            new_bodies = {}
+            for body in self.bodies:
+                collided = arcade.check_for_collision_with_list(body, self.bodies)
+                if len(collided) > 0:
+                    merged_list, new_body, new_body_mass, new_body_impulse = body.merge(collided)
+                    merged_list = list(merged_list)
+                    new_bodies[new_body] = (new_body_mass, new_body_impulse)
+                    for merged in merged_list:
+                        merged.remove_from_sprite_lists()
+
+            for new_body, (new_body_mass, new_body_impulse) in new_bodies.items():
+                self.bodies.append(new_body)
+                new_body.prepare_physics(new_body_mass, new_body_impulse)
+
+    def create_body(self, x: float, y: float, radius: float = 10) -> Body:
         image = PIL.Image.open(f"{self.settings.IMAGES_FOLDER}/circle_0.png")
         texture = Texture(image, hit_box_algorithm = arcade.hitbox.algo_detailed)
         scale = radius / sum(texture.size) * 4
         angle = 0
         body = Body(self, texture, scale, x, y, angle)
-
-        self.bodies.append(body)
-        body.prepare_physics()
+        return body
 
     def on_mouse_press(self, x: int, y: int, button: int, modifiers: int) -> None:
         super().on_mouse_press(x, y, button, modifiers)
-        self.add_body(x, y)
+        if button == 1:
+            body = self.create_body(x, y)
+            self.bodies.append(body)
+            body.prepare_physics()
+        elif button == 4:
+            bodies = arcade.get_sprites_at_point((x, y), self.bodies)
+            for body in bodies:
+                body.remove_from_sprite_lists()
