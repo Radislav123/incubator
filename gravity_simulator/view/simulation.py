@@ -59,59 +59,35 @@ class Body(Sprite):
             damping = adj_damping
 
         # Custom gravity
-        calculation_type = 1
-        if calculation_type == 0:
-            if len(self.view.bodies) > 1:
-                body_system = self.view.body_system
-                full_mass = body_system.mass
-                system_mass = body_system.mass - body.mass
+        coeff = 10
+        for other in self.view.bodies:
+            if self in self.view.adding_gravities:
+                adding_gravity = self.view.adding_gravities.pop(self)
+                adding_gravity_x = -adding_gravity[0]
+                adding_gravity_y = -adding_gravity[1]
 
-                # self.physics_body == body
-                system_x = (body_system.x * full_mass - self.center_x * body.mass) / system_mass
-                system_y = (body_system.y * full_mass - self.center_y * body.mass) / system_mass
-
-                distance_x = system_x - self.center_x
-                distance_y = system_y - self.center_y
+                gravity_x = gravity[0] + math.copysign(adding_gravity_x, other.center_x - self.center_x)
+                gravity_y = gravity[1] + math.copysign(adding_gravity_y, other.center_y - self.center_y)
+                gravity = (gravity_x, gravity_y)
+            else:
+                distance_x = other.center_x - self.center_x
+                distance_y = other.center_y - self.center_y
                 distance_square = distance_x**2 + distance_y**2
                 distance = distance_square**(1 / 2)
 
-                if distance_square != 0:
-                    adding_gravity = system_mass / distance_square
-                    adding_gravity_x = adding_gravity * distance_x / distance
-                    adding_gravity_y = adding_gravity * distance_y / distance
-
-                    gravity_x = gravity[0] + math.copysign(adding_gravity_x, system_x - self.center_x)
-                    gravity_y = gravity[1] + math.copysign(adding_gravity_y, system_y - self.center_y)
-                    gravity = (gravity_x, gravity_y)
-        elif calculation_type == 1:
-            for other in self.view.bodies:
-                if self in self.view.adding_gravities:
-                    adding_gravity = self.view.adding_gravities.pop(self)
-                    adding_gravity_x = -adding_gravity[0]
-                    adding_gravity_y = -adding_gravity[1]
+                if (distance < self.width / 2 or distance < self.height / 2 or
+                        distance < other.width / 2 or distance < other.height / 2):
+                    self.view.adding_gravities[other] = (0, 0)
+                else:
+                    adding_gravity = other.physics_body.mass / distance_square
+                    adding_gravity_x = coeff * adding_gravity * distance_x / distance
+                    adding_gravity_y = coeff * adding_gravity * distance_y / distance
 
                     gravity_x = gravity[0] + math.copysign(adding_gravity_x, other.center_x - self.center_x)
                     gravity_y = gravity[1] + math.copysign(adding_gravity_y, other.center_y - self.center_y)
                     gravity = (gravity_x, gravity_y)
-                else:
-                    distance_x = other.center_x - self.center_x
-                    distance_y = other.center_y - self.center_y
-                    distance_square = distance_x**2 + distance_y**2
-                    distance = distance_square**(1 / 2)
 
-                    if (distance < self.width / 2 or distance < self.height / 2 or
-                            distance < other.width / 2 or distance < other.height / 2):
-                        self.view.adding_gravities[other] = (0, 0)
-                    else:
-                        adding_gravity = other.physics_body.mass / distance_square
-                        adding_gravity_x = adding_gravity * distance_x / distance
-                        adding_gravity_y = adding_gravity * distance_y / distance
-
-                        gravity_x = gravity[0] + math.copysign(adding_gravity_x, other.center_x - self.center_x)
-                        gravity_y = gravity[1] + math.copysign(adding_gravity_y, other.center_y - self.center_y)
-                        gravity = (gravity_x, gravity_y)
-
-                        self.view.adding_gravities[other] = (adding_gravity_x, adding_gravity_y)
+                    self.view.adding_gravities[other] = (adding_gravity_x, adding_gravity_y)
 
         # Go ahead and update velocity
         pymunk.Body.update_velocity(body, gravity, damping, delta_time)
@@ -125,7 +101,7 @@ class Body(Sprite):
 
     # noinspection PyMethodOverriding
     def on_update(self, delta_time: float) -> None:
-        max_distance = 1000
+        max_distance = 0
         if (self.center_x < -max_distance or self.center_x > self.view.window.width + max_distance or
                 self.center_y < -max_distance or self.center_y > self.view.window.height + max_distance):
             self.remove_from_simulation()
