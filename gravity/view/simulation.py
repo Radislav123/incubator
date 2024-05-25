@@ -7,9 +7,10 @@ import arcade.hitbox
 import pymunk
 from arcade import PymunkPhysicsEngine, Sprite, SpriteList
 
+from core.service import Color
 from core.texture import Texture
 from core.view.simulation import SimulationView as CoreSimulationView
-from gravity_simulator.settings import Settings
+from gravity.settings import Settings
 
 
 class BodySystem:
@@ -61,33 +62,20 @@ class Body(Sprite):
         # Custom gravity
         coeff = 10
         for other in self.view.bodies:
-            if self in self.view.adding_gravities:
-                adding_gravity = self.view.adding_gravities.pop(self)
-                adding_gravity_x = -adding_gravity[0]
-                adding_gravity_y = -adding_gravity[1]
+            distance_x = other.center_x - self.center_x
+            distance_y = other.center_y - self.center_y
+            distance_square = distance_x**2 + distance_y**2
+            distance = distance_square**(1 / 2)
+
+            if not (distance < self.width / 2 or distance < self.height / 2 or
+                    distance < other.width / 2 or distance < other.height / 2):
+                adding_gravity = other.physics_body.mass / distance_square
+                adding_gravity_x = coeff * adding_gravity * distance_x / distance
+                adding_gravity_y = coeff * adding_gravity * distance_y / distance
 
                 gravity_x = gravity[0] + math.copysign(adding_gravity_x, other.center_x - self.center_x)
                 gravity_y = gravity[1] + math.copysign(adding_gravity_y, other.center_y - self.center_y)
                 gravity = (gravity_x, gravity_y)
-            else:
-                distance_x = other.center_x - self.center_x
-                distance_y = other.center_y - self.center_y
-                distance_square = distance_x**2 + distance_y**2
-                distance = distance_square**(1 / 2)
-
-                if (distance < self.width / 2 or distance < self.height / 2 or
-                        distance < other.width / 2 or distance < other.height / 2):
-                    self.view.adding_gravities[other] = (0, 0)
-                else:
-                    adding_gravity = other.physics_body.mass / distance_square
-                    adding_gravity_x = coeff * adding_gravity * distance_x / distance
-                    adding_gravity_y = coeff * adding_gravity * distance_y / distance
-
-                    gravity_x = gravity[0] + math.copysign(adding_gravity_x, other.center_x - self.center_x)
-                    gravity_y = gravity[1] + math.copysign(adding_gravity_y, other.center_y - self.center_y)
-                    gravity = (gravity_x, gravity_y)
-
-                    self.view.adding_gravities[other] = (adding_gravity_x, adding_gravity_y)
 
         # Go ahead and update velocity
         pymunk.Body.update_velocity(body, gravity, damping, delta_time)
@@ -134,12 +122,10 @@ class SimulationView(CoreSimulationView):
     bodies: SpriteList[Body]
     physics_engine: PhysicsEngine
     body_system: BodySystem
+    creating_body: Body | None
 
     def __init__(self) -> None:
         super().__init__()
-
-        self.adding_gravities: dict[Body, tuple[float, float]] = {}
-        self.creating_body: Body | None = None
 
     def on_show_view(self) -> None:
         super().on_show_view()
@@ -147,11 +133,19 @@ class SimulationView(CoreSimulationView):
         self.bodies = SpriteList()
         self.physics_engine = PhysicsEngine()
         self.body_system = BodySystem(self.bodies)
+        self.creating_body = None
 
     def on_draw(self) -> None:
         super().on_draw()
         self.bodies.draw()
-        # self.bodies.draw_hit_boxes(Color.RED)
+
+        draw_hit_boxes = False
+        if draw_hit_boxes:
+            self.bodies.draw_hit_boxes(Color.RED)
+
+        draw_mass_center = False
+        if draw_mass_center and self.body_system.x is not None:
+            arcade.draw_point(self.body_system.x, self.body_system.y, Color.RED, 30)
 
     def on_update(self, delta_time: float) -> None:
         self.body_system.calculate()

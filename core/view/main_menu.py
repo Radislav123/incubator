@@ -4,7 +4,7 @@ from clicker.view.simulation import SimulationView as ClickerSimulationView
 from core.ui.button import TextureButton
 from core.view.menu import MenuView
 from core.view.simulation import SimulationView
-from gravity_simulator.view.simulation import SimulationView as GravitySimulationView
+from gravity.view.simulation import SimulationView as GravitySimulationView
 from simple_clicker.view.simulation import SimulationView as SimpleClickerSimulationView
 
 
