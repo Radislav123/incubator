@@ -6,6 +6,7 @@ import arcade
 from arcade import Sprite, SpriteList
 
 from core.texture import Texture
+from snake.component.snake import Segment
 from snake.service.color import Color
 from snake.settings import Settings
 
@@ -19,7 +20,7 @@ Position = tuple[float, float] | list[float]
 class Tile(Sprite):
     settings = Settings()
 
-    colors: dict[bool, Texture]
+    colors: dict[bool, Color]
     default_border_color = Color.TILE_BORDER
     image_path = f"{settings.IMAGES_FOLDER}/hexagon_0.png"
     _texture: Texture = None
@@ -28,6 +29,9 @@ class Tile(Sprite):
     radius = 20
     default_width = float(math.sqrt(3) * radius + overlap_distance)
     default_height = float(2 * radius + overlap_distance)
+
+    map_x: int
+    map_y: int
 
     # границы плиток должны задаваться с небольшим наслоением, так как границы не считаются их частью
     # если граница проходит по 400 координате, то 399.(9) принадлежит плитке, а 400 уже - нет
@@ -60,7 +64,7 @@ class Tile(Sprite):
     def get_texture(cls) -> Texture:
         if cls._texture is None:
             image = PIL.Image.open(cls.image_path)
-            cls._texture = Texture(image, hit_box_algorithm = arcade.hitbox.algo_detailed)
+            cls._texture = Texture(image)
             cls._texture.width = cls.default_width
             cls._texture.height = cls.default_height
         return cls._texture
@@ -72,6 +76,16 @@ class Tile(Sprite):
     def unregister(self) -> None:
         self.remove_from_sprite_lists()
         self.world.tile_borders.remove(self.border)
+
+    def update_color(self) -> None:
+        segment = self.world.map.snake[self.map_x][self.map_y]
+        if segment is None:
+            color = self.colors[self.enabled]
+        else:
+            color = segment.color
+
+        if color != self.color:
+            self.color = color
 
 
 class SurfaceTile(Tile):
@@ -99,7 +113,6 @@ class BorderTile(Tile):
         self.world.border_tiles.append(self)
 
 
-# todo: write it
 class Map:
     def __init__(self, world: "World") -> None:
         self.world = world
@@ -107,6 +120,8 @@ class Map:
         square_side_length = self.side_length * 2 - 1
         self.tiles: list[list[Tile | None]] = [[None for _ in range(square_side_length)]
                                                for _ in range(square_side_length)]
+        self.snake: list[list[Segment | None]] = [[None for _ in range(square_side_length)]
+                                                  for _ in range(square_side_length)]
 
         self.prepare_tiles()
 
@@ -121,7 +136,10 @@ class Map:
         )
         x = self.side_length - 1
         y = self.side_length - 1
-        self.tiles[x][y] = self.world.all_tiles[0]
+        tile = self.world.all_tiles[0]
+        self.tiles[x][y] = tile
+        tile.map_x = x
+        tile.map_y = y
 
         index = 1
         for edge_size in range(1, self.side_length):
@@ -130,7 +148,10 @@ class Map:
                 for _ in range(edge_size):
                     x += offset_x
                     y += offset_y
-                    self.tiles[x][y] = self.world.all_tiles[index]
+                    tile = self.world.all_tiles[index]
+                    self.tiles[x][y] = tile
+                    tile.map_x = x
+                    tile.map_y = y
                     index += 1
 
 

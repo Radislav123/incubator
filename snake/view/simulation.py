@@ -1,6 +1,7 @@
 from arcade.gui import UITextureButton
 
 from core.view.simulation import ExitButton as CoreExitButton, SimulationView as CoreSimulationView
+from snake.component.snake import Snake
 from snake.component.world import World
 from snake.service.color import Color
 from snake.settings import Settings
@@ -32,21 +33,20 @@ class SimulationView(CoreSimulationView):
 
     exit_button_class = ExitButton
 
-    score: int
     world: World
-
-    def reset_info(self) -> None:
-        self.score = 0
+    snake: Snake
 
     def on_show_view(self) -> None:
         super().on_show_view()
 
-        self.reset_info()
         self.world = World(self)
+        self.snake = Snake(self.world.map)
 
     def on_draw(self) -> None:
         super().on_draw()
 
+        for tile in self.world.all_tiles:
+            tile.update_color()
         self.world.all_tiles.draw()
 
     def on_mouse_press(self, x: int, y: int, button: int, modifiers: int) -> None:
