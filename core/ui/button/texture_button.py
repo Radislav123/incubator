@@ -2,11 +2,12 @@ import arcade
 from arcade.gui import UITextureButton
 
 from core.mixin import MovableWidgetMixin
-from core.service import Color
+from core.service.color import Color
 from core.settings import Settings
 from core.texture import Texture
 
 
+# noinspection DuplicatedCode
 class TextureButton(UITextureButton, MovableWidgetMixin):
     settings = Settings()
 

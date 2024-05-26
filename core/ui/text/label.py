@@ -1,4 +1,4 @@
-from core.service import Color
+from core.service.color import Color
 from core.texture import Texture
 from core.ui.button import TextureButton
 

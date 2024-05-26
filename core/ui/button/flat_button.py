@@ -1,7 +1,7 @@
 from arcade.gui import UIFlatButton
 
 from core.mixin import MovableWidgetMixin
-from core.service import Color
+from core.service.color import Color
 from core.settings import Settings
 
 

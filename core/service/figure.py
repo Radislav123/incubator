@@ -1,6 +1,6 @@
 from arcade.types import Point
 
-from core.service import float_range
+from core.service.functions import float_range
 
 
 class Figure:

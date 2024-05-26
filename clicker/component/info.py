@@ -2,7 +2,8 @@ from typing import TYPE_CHECKING
 
 from arcade.gui import UIOnClickEvent
 
-from core.service import Anchor, Color
+from core.service.anchor import Anchor
+from core.service.color import Color
 from core.texture import Texture
 from core.ui.button import TextureButton
 from core.ui.layout import BoxLayout

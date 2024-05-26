@@ -1,4 +1,4 @@
-class Color(tuple[int, int, int, int]):
+class Color:
     BACKGROUND = (50, 50, 70, 255)
     NORMAL = (58, 58, 78, 255)
     HOVERED = (64, 64, 86, 255)

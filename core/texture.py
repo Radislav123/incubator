@@ -6,7 +6,7 @@ import arcade
 from PIL import Image
 from arcade import Texture as ArcadeTexture
 
-from core.service import Color
+from core.service.color import Color
 from core.service.figure import ClosedFigure, RoundedRectangle
 
 

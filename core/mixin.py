@@ -1,7 +1,7 @@
 import arcade
 from arcade.gui import UIWidget
 
-from core.service import Anchor
+from core.service.anchor import Anchor
 from core.settings import Settings
 
 

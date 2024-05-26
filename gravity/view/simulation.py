@@ -7,7 +7,7 @@ import arcade.hitbox
 import pymunk
 from arcade import PymunkPhysicsEngine, Sprite, SpriteList
 
-from core.service import Color
+from core.service.color import Color
 from core.texture import Texture
 from core.view.simulation import SimulationView as CoreSimulationView
 from gravity.settings import Settings

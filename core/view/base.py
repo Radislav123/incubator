@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 import arcade
 
-from core.service import Color
+from core.service.color import Color
 from core.settings import Settings
 from core.ui.manager import UIManager
 from logger import Logger
