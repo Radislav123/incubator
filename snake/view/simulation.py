@@ -1,8 +1,11 @@
+import json
+
 from arcade.gui import UIOnClickEvent, UITextureButton
 
 from core.service.anchor import Anchor
 from core.ui.button import TextureButton
 from core.view.simulation import ExitButton as CoreExitButton, SimulationView as CoreSimulationView
+from snake.component.brain import Brain
 from snake.component.snake import Snake
 from snake.component.world import World
 from snake.service.color import Color
@@ -68,17 +71,31 @@ class SimulationView(CoreSimulationView):
     snake: Snake
     snake_perform_timer: float
 
-    def on_show_view(self) -> None:
-        super().on_show_view()
-
+    def prepare_speed_button(self) -> None:
         self.speed_button = SpeedButton(self)
         self.speed_button.move_to(self.window.width, 0, Anchor.X.RIGHT, Anchor.Y.DOWN)
         self.ui_manager.add(self.speed_button)
 
+    def load_brain(self, path: str) -> None:
+        with open(path, 'r') as file:
+            data = json.load(file)
+            self.snake.brain = Brain.load(data)
+
+    def dump_brain(self, path: str) -> None:
+        with open(path, 'w') as file:
+            data = self.snake.brain.dump()
+            json.dump(data, file, indent = 4)
+
+    def prepare_snake(self) -> None:
         self.world = World(self)
         self.snake = Snake(self.world)
-        self.snake.brain.load()
+        self.load_brain(self.settings.CLEAN_BRAIN_PATH)
         self.snake_perform_timer = 0
+
+    def on_show_view(self) -> None:
+        super().on_show_view()
+        self.prepare_speed_button()
+        self.prepare_snake()
 
     def on_draw(self) -> None:
         self.speed_button.update_text()

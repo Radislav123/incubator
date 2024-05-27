@@ -1,8 +1,6 @@
-from typing import TYPE_CHECKING
-
-
-if TYPE_CHECKING:
-    from snake.component.snake import Snake
+import inspect
+import sys
+from typing import Self
 
 
 class Neuron:
@@ -13,6 +11,16 @@ class Neuron:
     # todo: write it
     def process(self, inputs: list[float]) -> None:
         pass
+
+    def dump(self) -> dict:
+        data = {key: value for key, value in self.__dict__.items()
+                if key in inspect.signature(self.__class__).parameters}
+        data["class"] = self.__class__.__name__
+        return data
+
+    @classmethod
+    def load(cls, dictionary: dict) -> Self:
+        return cls(**dictionary)
 
 
 class OutputNeuron(Neuron):
@@ -27,22 +35,22 @@ class OutputNeuron(Neuron):
 class Brain:
     def __init__(self) -> None:
         self.layers: list[list[Neuron | OutputNeuron]] = []
-        self.output = 0
+        self.output: float = 0
 
-    # todo: write it
-    def load(self) -> None:
-        inputs = [
-            Neuron([0])
-        ]
-        outputs = [OutputNeuron([0], x) for x in range(-1, 2, 1)]
-        self.layers = [
-            inputs,
-            outputs
-        ]
+    def dump(self) -> list[list[dict]]:
+        return [[neuron.dump() for neuron in layer] for layer in self.layers]
 
-    # todo: write it
-    def save(self) -> None:
-        pass
+    @classmethod
+    def load(cls, data: list[list[dict]]) -> Self:
+        brain = cls()
+        for layer_description in data:
+            layer = []
+            brain.layers.append(layer)
+            for neuron_description in layer_description:
+                neuron_class = getattr(sys.modules[__name__], neuron_description.pop("class"))
+                neuron = neuron_class(**neuron_description)
+                layer.append(neuron)
+        return brain
 
     def process(self, inputs: list[float]) -> None:
         for layer in self.layers:

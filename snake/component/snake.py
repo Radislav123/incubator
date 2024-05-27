@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
-from snake.service.color import Color
 from snake.component.brain import Brain
+from snake.service.color import Color
 
 
 if TYPE_CHECKING:
@@ -27,6 +27,8 @@ class Segment:
 
 
 class Snake:
+    brain: Brain
+
     def __init__(self, world: "World") -> None:
         self.age = 0
         self.starvation = 0
@@ -47,8 +49,6 @@ class Snake:
         self.segments: list[Segment] = []
         self.add_segment(self.map.side_length - 1, self.map.side_length - 1)
         self.head = self.segments[0]
-        self.brain = Brain()
-
 
     def add_segment(self, x: int, y: int) -> None:
         segment = Segment(self.map, x, y)

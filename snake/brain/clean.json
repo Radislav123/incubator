@@ -1,0 +1,33 @@
+[
+    [
+        {
+            "input_weights": [
+                0
+            ],
+            "class": "Neuron"
+        }
+    ],
+    [
+        {
+            "input_weights": [
+                0
+            ],
+            "value": -1,
+            "class": "OutputNeuron"
+        },
+        {
+            "input_weights": [
+                0
+            ],
+            "value": 0,
+            "class": "OutputNeuron"
+        },
+        {
+            "input_weights": [
+                0
+            ],
+            "value": 1,
+            "class": "OutputNeuron"
+        }
+    ]
+]
