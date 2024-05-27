@@ -62,6 +62,7 @@ class SpeedButton(SnakeStyleButtonMixin, TextureButton):
 
 class SimulationView(CoreSimulationView):
     settings = Settings()
+    update_rate = 1 / 10**10
     background_color = Color.BACKGROUND
 
     exit_button_class = ExitButton
@@ -70,6 +71,7 @@ class SimulationView(CoreSimulationView):
     world: World
     snake: Snake
     snake_perform_timer: float
+    snake_training: bool
 
     def prepare_speed_button(self) -> None:
         self.speed_button = SpeedButton(self)
@@ -86,16 +88,22 @@ class SimulationView(CoreSimulationView):
             data = self.snake.brain.dump()
             json.dump(data, file, indent = 4)
 
-    def prepare_snake(self) -> None:
-        self.world = World(self)
+    def load_snake(self, path: str) -> None:
         self.snake = Snake(self.world)
-        self.load_brain(self.settings.CLEAN_BRAIN_PATH)
+        self.load_brain(path)
         self.snake_perform_timer = 0
+
+    def prepare_world(self) -> None:
+        self.world = World(self)
+        self.world.place_food(True)
 
     def on_show_view(self) -> None:
         super().on_show_view()
         self.prepare_speed_button()
-        self.prepare_snake()
+        self.prepare_world()
+        self.snake_training = True
+        # todo: remove line?
+        # self.load_snake(self.settings.CLEAN_BRAIN_PATH)
 
     def on_draw(self) -> None:
         self.speed_button.update_text()
@@ -104,13 +112,18 @@ class SimulationView(CoreSimulationView):
         for tile in self.world.all_tiles:
             tile.update_color()
         self.world.all_tiles.draw()
-        self.world.food.draw()
+
+        if not self.snake_training:
+            self.world.food.draw()
 
     def on_update(self, delta_time: float) -> None:
-        self.snake_perform_timer += delta_time
-        if self.snake.alive and self.snake_perform_timer > (period := 1 / self.speed_button.speed):
-            self.snake_perform_timer -= period
-            self.snake.perform()
+        if not self.snake_training:
+            self.snake_perform_timer += delta_time
+            if self.snake is not None:
+                self.snake_perform_timer += delta_time
+                if self.snake.alive and self.snake_perform_timer > (period := 1 / self.speed_button.speed):
+                    self.snake_perform_timer -= period
+                    self.snake.perform()
 
     def on_mouse_press(self, x: int, y: int, button: int, modifiers: int) -> None:
         super().on_mouse_press(x, y, button, modifiers)

@@ -206,7 +206,6 @@ class World:
 
         self.map = Map(self)
         self.food = Food()
-        self.place_food(True)
 
     # мир делится на шестиугольники
     # https://www.redblobgames.com/grids/hexagons/

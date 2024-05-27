@@ -9,13 +9,17 @@ class Window(arcade.Window):
     settings = Settings()
     width = 1200
     height = 700
+    default_update_rate = 1/60
 
-    def __init__(self) -> None:
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(
             self.width,
             self.height,
             self.settings.PROJECT_NAME.capitalize(),
-            center_window = True
+            *args,
+            center_window = True,
+            update_rate = self.default_update_rate,
+            **kwargs
         )
 
         self.logger = Logger(str(self.__class__))
