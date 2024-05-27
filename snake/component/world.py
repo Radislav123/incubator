@@ -32,6 +32,7 @@ class Tile(Sprite):
 
     map_x: int
     map_y: int
+    border_tile = False
 
     # границы плиток должны задаваться с небольшим наслоением, так как границы не считаются их частью
     # если граница проходит по 400 координате, то 399.(9) принадлежит плитке, а 400 уже - нет
@@ -107,6 +108,7 @@ class BorderTile(Tile):
         False: Color.BORDER_TILE_NORMAL,
         True: Color.BORDER_TILE_ENABLED
     }
+    border_tile = True
 
     def register(self) -> None:
         super().register()
@@ -159,11 +161,9 @@ class World:
     def __init__(self, view: "SimulationView") -> None:
         self.view = view
 
-        self.age = 0
-        self.radius = min(self.view.window.size) // 2
-        self.tiles_in_radius = self.radius // (Tile.radius * 2) or 1
+        self.tiles_in_radius = 10
         self.border_thickness = 1
-        self.center = self.view.window.center
+        self.center = (self.view.window.width * 2 / 3, self.view.window.center_y)
         self.position_to_tile_cache: dict[tuple[int, int], Tile | None] = {}
 
         # список плиток мира
