@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
 
 from snake.service.color import Color
+from snake.component.brain import Brain
 
 
 if TYPE_CHECKING:
@@ -46,6 +47,8 @@ class Snake:
         self.segments: list[Segment] = []
         self.add_segment(self.map.side_length - 1, self.map.side_length - 1)
         self.head = self.segments[0]
+        self.brain = Brain()
+
 
     def add_segment(self, x: int, y: int) -> None:
         segment = Segment(self.map, x, y)
@@ -58,11 +61,12 @@ class Snake:
         for segment in self.segments:
             x, y = segment.move_to(x, y)
 
-    # todo: write it
     def choose_direction(self) -> None:
+        self.brain.process([0])
+
         directions_amount = len(self.directions)
-        direction_change = 1 + directions_amount
-        self.direction = (self.directions + direction_change) % direction_change
+        direction_change = self.brain.output + directions_amount
+        self.direction = (self.direction + direction_change) % direction_change
 
     def eat(self) -> None:
         if self.map.tiles[self.head.x][self.head.y].food is not None:

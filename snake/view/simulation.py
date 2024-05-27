@@ -77,6 +77,7 @@ class SimulationView(CoreSimulationView):
 
         self.world = World(self)
         self.snake = Snake(self.world)
+        self.snake.brain.load()
         self.snake_perform_timer = 0
 
     def on_draw(self) -> None:
