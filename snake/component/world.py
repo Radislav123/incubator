@@ -1,4 +1,5 @@
 import math
+import random
 from typing import TYPE_CHECKING
 
 import PIL.Image
@@ -33,6 +34,7 @@ class Tile(Sprite):
     map_x: int
     map_y: int
     border_tile = False
+    food: "Food" = None
 
     # границы плиток должны задаваться с небольшим наслоением, так как границы не считаются их частью
     # если граница проходит по 400 координате, то 399.(9) принадлежит плитке, а 400 уже - нет
@@ -87,6 +89,31 @@ class Tile(Sprite):
 
         if color != self.color:
             self.color = color
+
+
+class Food(Sprite):
+    settings = Settings()
+    image_path = f"{settings.IMAGES_FOLDER}/hexagon_0.png"
+    _texture: Texture = None
+
+    overlap_distance = Tile.overlap_distance
+    radius = Tile.radius
+    default_width = float(math.sqrt(3) * radius + overlap_distance)
+    default_height = float(2 * radius + overlap_distance)
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(self.get_texture(), *args, **kwargs)
+        self.tile: Tile | None = None
+        self.color = Color.FOOD
+
+    @classmethod
+    def get_texture(cls) -> Texture:
+        if cls._texture is None:
+            image = PIL.Image.open(cls.image_path)
+            cls._texture = Texture(image)
+            cls._texture.width = cls.default_width
+            cls._texture.height = cls.default_height
+        return cls._texture
 
 
 class SurfaceTile(Tile):
@@ -178,6 +205,8 @@ class World:
             self.tile_borders.append(tile.border)
 
         self.map = Map(self)
+        self.food = Food()
+        self.place_food(True)
 
     # мир делится на шестиугольники
     # https://www.redblobgames.com/grids/hexagons/
@@ -214,6 +243,17 @@ class World:
                 neighbour = self.position_to_tile((tile.center_x + offset_x, tile.center_y + offset_y))
                 if neighbour is not None:
                     tile.neighbors.add(neighbour)
+
+    def place_food(self, first_placing: bool) -> None:
+        if not first_placing:
+            self.food.tile.food = None
+
+        free_tiles = [tile for tile in self.surface_tiles if self.map.snake[tile.map_x][tile.map_y] is None]
+        tile = free_tiles[random.randint(0, len(free_tiles) - 1)]
+
+        tile.food = self.food
+        self.food.tile = tile
+        self.food.position = tile.position
 
     def position_to_tile(self, position: Position) -> Tile | None:
         point = (int(position[0]), int(position[1]))

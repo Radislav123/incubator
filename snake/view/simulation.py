@@ -38,7 +38,7 @@ class SpeedButton(SnakeStyleButtonMixin, TextureButton):
         self.base_speed = 1
         self.speed = self.base_speed
         self.speed_multiplier = 2
-        self.max_speed = 8
+        self.max_speed = 64
         super().__init__(*args, text = self.get_text(), **kwargs)
         self.view = view
 
@@ -76,7 +76,7 @@ class SimulationView(CoreSimulationView):
         self.ui_manager.add(self.speed_button)
 
         self.world = World(self)
-        self.snake = Snake(self.world.map)
+        self.snake = Snake(self.world)
         self.snake_perform_timer = 0
 
     def on_draw(self) -> None:
@@ -86,6 +86,7 @@ class SimulationView(CoreSimulationView):
         for tile in self.world.all_tiles:
             tile.update_color()
         self.world.all_tiles.draw()
+        self.world.food.draw()
 
     def on_update(self, delta_time: float) -> None:
         self.snake_perform_timer += delta_time

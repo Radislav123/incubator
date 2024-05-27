@@ -4,7 +4,7 @@ from snake.service.color import Color
 
 
 if TYPE_CHECKING:
-    from snake.component.world import Map
+    from snake.component.world import Map, World
 
 
 class Segment:
@@ -26,12 +26,26 @@ class Segment:
 
 
 class Snake:
-    def __init__(self, world_map: "Map") -> None:
-        self.map = world_map
+    def __init__(self, world: "World") -> None:
+        self.age = 0
+        self.starvation = 0
+        self.max_starvation = 100
+        self.world = world
+        self.map = self.world.map
+        self.alive = True
+        self.direction = 0
+        self.directions = (
+            (1, 0),
+            (0, 1),
+            (-1, 1),
+            (-1, 0),
+            (0, -1),
+            (1, -1)
+        )
+
         self.segments: list[Segment] = []
         self.add_segment(self.map.side_length - 1, self.map.side_length - 1)
         self.head = self.segments[0]
-        self.alive = True
 
     def add_segment(self, x: int, y: int) -> None:
         segment = Segment(self.map, x, y)
@@ -44,14 +58,33 @@ class Snake:
         for segment in self.segments:
             x, y = segment.move_to(x, y)
 
+    # todo: write it
+    def choose_direction(self) -> None:
+        directions_amount = len(self.directions)
+        direction_change = 1 + directions_amount
+        self.direction = (self.directions + direction_change) % direction_change
+
+    def eat(self) -> None:
+        if self.map.tiles[self.head.x][self.head.y].food is not None:
+            self.starvation = 0
+            # todo: прописать случай, когда некуда разместить еду?
+            self.world.place_food(False)
+        else:
+            self.starvation += 1
+
     def perform(self) -> None:
-        move_x = 0
-        move_y = 1
+        self.choose_direction()
+        move_x, move_y = self.directions[self.direction]
 
         border_collision = self.map.tiles[self.head.x + move_x][self.head.y + move_y].border_tile
         segment_collision = self.map.snake[self.head.x + move_x][self.head.y + move_y] is not None
-        self.alive = not (border_collision or segment_collision)
+        starvation_death = self.starvation > self.max_starvation
+
+        self.alive = not (border_collision or segment_collision or starvation_death)
         if self.alive:
             self.move(move_x, move_y)
+            self.eat()
         else:
             Segment.color = Color.SNAKE_SEGMENT_DEAD
+
+        self.age += 1
