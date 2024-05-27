@@ -10,11 +10,11 @@ class Neuron:
 
     def __init__(self, input_weights: list[float]) -> None:
         self.input_weights = input_weights
-        self.input_weights_sum = sum(self.input_weights)
         self.output: float = 0
 
+    # todo: write it
     def process(self, inputs: list[float]) -> None:
-        self.output = sum(inputs) / len(inputs) / self.input_weights_sum
+        self.output = 0
 
     def dump(self) -> dict:
         data = {key: value for key, value in self.__dict__.items()

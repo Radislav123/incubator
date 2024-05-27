@@ -8,8 +8,8 @@ class Color(CoreColor):
     PRESSED = (20, 20, 20, 255)
     DISABLED = (50, 50, 50, 255)
 
-    SNAKE_SEGMENT_ALIVE = (50, 200, 50, 255)
-    SNAKE_SEGMENT_DEAD = (50, 100, 40, 255)
+    SNAKE_ALIVE = (50, 200, 50, 255)
+    SNAKE_DEAD = (50, 100, 40, 255)
 
     FOOD = (150, 50, 50, 255)
 

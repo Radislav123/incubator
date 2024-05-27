@@ -1,3 +1,4 @@
+import copy
 import json
 
 from arcade.gui import UIOnClickEvent, UITextureButton
@@ -5,7 +6,9 @@ from arcade.gui import UIOnClickEvent, UITextureButton
 from core.service.anchor import Anchor
 from core.ui.button import TextureButton
 from core.view.simulation import ExitButton as CoreExitButton, SimulationView as CoreSimulationView
+from snake.component.arena import Arena
 from snake.component.brain import Brain
+from snake.component.map import Map
 from snake.component.snake import Snake
 from snake.component.world import World
 from snake.service.color import Color
@@ -69,41 +72,53 @@ class SimulationView(CoreSimulationView):
     speed_button: SpeedButton
 
     world: World
-    snake: Snake
+    arena: Arena = None
     snake_perform_timer: float
-    snake_training: bool
+    snake_released: bool
+
+    @staticmethod
+    def load_brain(path: str) -> Brain:
+        with open(path, 'r') as file:
+            data = json.load(file)
+            brain = Brain.load(data)
+        return brain
+
+    @staticmethod
+    def dump_brain(path: str, brain: Brain) -> None:
+        with open(path, 'w') as file:
+            data = brain.dump()
+            json.dump(data, file, indent = 4)
+
+    @classmethod
+    def load_snake(cls, path: str, world_map: Map) -> Snake:
+        brain = cls.load_brain(path)
+        snake = Snake(brain, world_map)
+        return snake
+
+    def create_arena(self, path: str) -> Arena:
+        world_map = copy.deepcopy(self.world.reference_map)
+        snake = self.load_snake(path, world_map)
+        arena = Arena(snake, world_map)
+        return arena
 
     def prepare_speed_button(self) -> None:
         self.speed_button = SpeedButton(self)
         self.speed_button.move_to(self.window.width, 0, Anchor.X.RIGHT, Anchor.Y.DOWN)
         self.ui_manager.add(self.speed_button)
 
-    def load_brain(self, path: str) -> None:
-        with open(path, 'r') as file:
-            data = json.load(file)
-            self.snake.brain = Brain.load(data)
-
-    def dump_brain(self, path: str) -> None:
-        with open(path, 'w') as file:
-            data = self.snake.brain.dump()
-            json.dump(data, file, indent = 4)
-
-    def load_snake(self, path: str) -> None:
-        self.snake = Snake(self.world)
-        self.load_brain(path)
-        self.snake_perform_timer = 0
-
     def prepare_world(self) -> None:
         self.world = World(self)
-        self.world.place_food(True)
 
     def on_show_view(self) -> None:
         super().on_show_view()
         self.prepare_speed_button()
         self.prepare_world()
-        self.snake_training = True
-        # todo: remove line?
-        # self.load_snake(self.settings.CLEAN_BRAIN_PATH)
+        self.snake_released = False
+        self.snake_perform_timer = 0
+
+        # todo: remove 2 lines
+        self.arena = self.create_arena(self.settings.CLEAN_BRAIN_PATH)
+        self.snake_released = True
 
     def on_draw(self) -> None:
         self.speed_button.update_text()
@@ -113,17 +128,14 @@ class SimulationView(CoreSimulationView):
             tile.update_color()
         self.world.all_tiles.draw()
 
-        if not self.snake_training:
-            self.world.food.draw()
-
     def on_update(self, delta_time: float) -> None:
-        if not self.snake_training:
+        if self.snake_released:
             self.snake_perform_timer += delta_time
-            if self.snake is not None:
+            if self.arena is not None:
                 self.snake_perform_timer += delta_time
-                if self.snake.alive and self.snake_perform_timer > (period := 1 / self.speed_button.speed):
+                if self.arena.snake.alive and self.snake_perform_timer > (period := 1 / self.speed_button.speed):
                     self.snake_perform_timer -= period
-                    self.snake.perform()
+                    self.arena.snake.perform()
 
     def on_mouse_press(self, x: int, y: int, button: int, modifiers: int) -> None:
         super().on_mouse_press(x, y, button, modifiers)

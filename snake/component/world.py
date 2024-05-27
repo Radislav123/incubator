@@ -1,5 +1,4 @@
 import math
-import random
 from typing import TYPE_CHECKING
 
 import PIL.Image
@@ -7,7 +6,7 @@ import arcade
 from arcade import Sprite, SpriteList
 
 from core.texture import Texture
-from snake.component.snake import Segment
+from snake.component.map import Map
 from snake.service.color import Color
 from snake.settings import Settings
 
@@ -33,8 +32,8 @@ class Tile(Sprite):
 
     map_x: int
     map_y: int
-    border_tile = False
-    food: "Food" = None
+    is_surface = False
+    is_border = False
 
     # границы плиток должны задаваться с небольшим наслоением, так как границы не считаются их частью
     # если граница проходит по 400 координате, то 399.(9) принадлежит плитке, а 400 уже - нет
@@ -81,39 +80,17 @@ class Tile(Sprite):
         self.world.tile_borders.remove(self.border)
 
     def update_color(self) -> None:
-        segment = self.world.map.snake[self.map_x][self.map_y]
-        if segment is None:
-            color = self.colors[self.enabled]
+        arena = self.world.view.arena
+        if self.world.view.snake_released and arena.world_map.snake[self.map_x][self.map_y]:
+            snake = arena.snake
+            color = snake.colors[snake.alive]
+        elif self.world.view.snake_released and arena.world_map.food[self.map_x][self.map_y]:
+            color = Color.FOOD
         else:
-            color = segment.color
+            color = self.colors[self.enabled]
 
         if color != self.color:
             self.color = color
-
-
-class Food(Sprite):
-    settings = Settings()
-    image_path = f"{settings.IMAGES_FOLDER}/hexagon_0.png"
-    _texture: Texture = None
-
-    overlap_distance = Tile.overlap_distance
-    radius = Tile.radius
-    default_width = float(math.sqrt(3) * radius + overlap_distance)
-    default_height = float(2 * radius + overlap_distance)
-
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(self.get_texture(), *args, **kwargs)
-        self.tile: Tile | None = None
-        self.color = Color.FOOD
-
-    @classmethod
-    def get_texture(cls) -> Texture:
-        if cls._texture is None:
-            image = PIL.Image.open(cls.image_path)
-            cls._texture = Texture(image)
-            cls._texture.width = cls.default_width
-            cls._texture.height = cls.default_height
-        return cls._texture
 
 
 class SurfaceTile(Tile):
@@ -121,6 +98,7 @@ class SurfaceTile(Tile):
         False: Color.SURFACE_TILE_NORMAL,
         True: Color.SURFACE_TILE_ENABLED
     }
+    is_surface = True
 
     def __init__(self, center: Position, world: "World") -> None:
         super().__init__(center, world)
@@ -135,53 +113,11 @@ class BorderTile(Tile):
         False: Color.BORDER_TILE_NORMAL,
         True: Color.BORDER_TILE_ENABLED
     }
-    border_tile = True
+    is_border = True
 
     def register(self) -> None:
         super().register()
         self.world.border_tiles.append(self)
-
-
-class Map:
-    def __init__(self, world: "World") -> None:
-        self.world = world
-        self.side_length = self.world.tiles_in_radius + self.world.border_thickness
-        square_side_length = self.side_length * 2 - 1
-        self.tiles: list[list[Tile | None]] = [[None for _ in range(square_side_length)]
-                                               for _ in range(square_side_length)]
-        self.snake: list[list[Segment | None]] = [[None for _ in range(square_side_length)]
-                                                  for _ in range(square_side_length)]
-
-        self.prepare_tiles()
-
-    def prepare_tiles(self) -> None:
-        offsets = (
-            (1, 0),
-            (0, 1),
-            (-1, 1),
-            (-1, 0),
-            (0, -1),
-            (1, -1)
-        )
-        x = self.side_length - 1
-        y = self.side_length - 1
-        tile = self.world.all_tiles[0]
-        self.tiles[x][y] = tile
-        tile.map_x = x
-        tile.map_y = y
-
-        index = 1
-        for edge_size in range(1, self.side_length):
-            y -= 1
-            for offset_x, offset_y in offsets:
-                for _ in range(edge_size):
-                    x += offset_x
-                    y += offset_y
-                    tile = self.world.all_tiles[index]
-                    self.tiles[x][y] = tile
-                    tile.map_x = x
-                    tile.map_y = y
-                    index += 1
 
 
 class World:
@@ -204,8 +140,7 @@ class World:
         for tile in self.surface_tiles:
             self.tile_borders.append(tile.border)
 
-        self.map = Map(self)
-        self.food = Food()
+        self.reference_map = Map(self)
 
     # мир делится на шестиугольники
     # https://www.redblobgames.com/grids/hexagons/
@@ -242,17 +177,6 @@ class World:
                 neighbour = self.position_to_tile((tile.center_x + offset_x, tile.center_y + offset_y))
                 if neighbour is not None:
                     tile.neighbors.add(neighbour)
-
-    def place_food(self, first_placing: bool) -> None:
-        if not first_placing:
-            self.food.tile.food = None
-
-        free_tiles = [tile for tile in self.surface_tiles if self.map.snake[tile.map_x][tile.map_y] is None]
-        tile = free_tiles[random.randint(0, len(free_tiles) - 1)]
-
-        tile.food = self.food
-        self.food.tile = tile
-        self.food.position = tile.position
 
     def position_to_tile(self, position: Position) -> Tile | None:
         point = (int(position[0]), int(position[1]))
