@@ -60,7 +60,7 @@ class Tile(Sprite):
         self.color = self.colors[self.enabled]
 
     def __repr__(self) -> str:
-        return f"{int(self.center_x), int(self.center_y)}"
+        return f"{self.__class__.__name__}{int(self.center_x), int(self.center_y)}"
 
     @classmethod
     def get_texture(cls) -> Texture:

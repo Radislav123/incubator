@@ -5,12 +5,14 @@ from arcade.gui import UIOnClickEvent, UITextureButton
 
 from core.texture import Texture
 from core.ui.button import TextureButton
+from core.ui.layout import BoxLayout
 from core.view.simulation import ExitButton as CoreExitButton
 from snake.service.color import Color
 from snake.settings import Settings
 
 
 if TYPE_CHECKING:
+    from snake.component.brain import Neuron
     from snake.view.simulation import SimulationView
 
 
@@ -126,4 +128,33 @@ class RestartButton(SnakeStyleButtonMixin, TextureButton):
         super().__init__(**kwargs)
 
     def on_click(self, event: UIOnClickEvent) -> None:
-        self.view.arena = self.view.prepare_arena()
+        self.view.arena = self.view.create_arena()
+
+
+class NeuronMap(SnakeStyleButtonMixin, TextureButton):
+    def __init__(self, neuron: "Neuron", **kwargs) -> None:
+        radius = 20
+        texture = Texture.create_circle(radius, color = Color.NEURON_SLEEP)
+        super().__init__(texture = texture, width = radius * 2, height = radius * 2, **kwargs)
+        self.neuron = neuron
+
+
+class BrainMap(BoxLayout):
+    settings = Settings()
+
+    def __init__(self, view: "SimulationView", **kwargs) -> None:
+        self.view = view
+        self.brain = self.view.arena.snake.brain
+        layers = [BoxLayout(children = [NeuronMap(neuron) for neuron in layer], space_between = self.gap)
+                  for layer in self.brain.layers]
+
+        super().__init__(vertical = False, children = layers, space_between = self.gap * 4, **kwargs)
+        self.with_padding(all = self.gap)
+        self.fit_content()
+        self.with_background(
+            texture = Texture.create_rounded_rectangle(
+                self.size,
+                color = Color.NORMAL,
+                border_color = Color.BORDER
+            )
+        )

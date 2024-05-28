@@ -1,17 +1,13 @@
 import copy
-import json
 
 from core.service.anchor import Anchor
 from core.ui.layout import BoxLayout
 from core.view.simulation import SimulationView as CoreSimulationView
 from snake.component.arena import Arena
-from snake.component.brain import Brain
-from snake.component.map import Map
-from snake.component.snake import Snake
 from snake.component.world import World
 from snake.service.color import Color
 from snake.settings import Settings
-from snake.ui import ExitButton, PauseButton, RestartButton, SpeedButton
+from snake.ui import BrainMap, ExitButton, PauseButton, RestartButton, SpeedButton
 
 
 class SimulationView(CoreSimulationView):
@@ -28,33 +24,20 @@ class SimulationView(CoreSimulationView):
     arena: Arena = None
     snake_perform_timer: float
     snake_released: bool
-    snake_brain_path = settings.CLEAN_BRAIN_PATH
+    brain_path = settings.CLEAN_BRAIN_PATH
+    brain_map: BrainMap
 
-    @staticmethod
-    def dump_brain(path: str, brain: Brain) -> None:
-        with open(path, 'w') as file:
-            data = brain.dump()
-            json.dump(data, file, indent = 4)
-
-    @classmethod
-    def load_brain(cls) -> Brain:
-        with open(cls.snake_brain_path, 'r') as file:
-            data = json.load(file)
-            brain = Brain.load(data)
-        return brain
-
-    @classmethod
-    def load_snake(cls, world_map: Map) -> Snake:
-        brain = cls.load_brain()
-        snake = Snake(brain, world_map)
-        return snake
-
-    def prepare_arena(self) -> Arena:
+    def create_arena(self) -> Arena:
         world_map = copy.deepcopy(self.world.reference_map)
-        snake = self.load_snake(world_map)
-        arena = Arena(snake, world_map)
+        arena = Arena(self.brain_path, world_map)
         self.snake_perform_timer = 0
         return arena
+
+    def prepare_brain_map(self) -> None:
+        self.brain_map = BrainMap(self)
+
+        self.brain_map.move_to(0, self.window.height, Anchor.X.LEFT, Anchor.Y.TOP)
+        self.ui_manager.add(self.brain_map)
 
     def prepare_buttons(self) -> None:
         layout = BoxLayout()
@@ -81,8 +64,9 @@ class SimulationView(CoreSimulationView):
         self.prepare_world()
         self.snake_released = False
 
-        # todo: remove 2 lines
-        self.arena = self.prepare_arena()
+        # todo: remove 3 lines
+        self.arena = self.create_arena()
+        self.prepare_brain_map()
         self.snake_released = True
 
     def on_draw(self) -> None:
