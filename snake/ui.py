@@ -154,6 +154,9 @@ class LayerLabel(SnakeStyleButtonMixin, Label):
 
 class BrainMap(BoxLayout):
     settings = Settings()
+    gap = (20, 40, 20, 40)
+    space_between_layers = 40
+    space_between_neurons = 20
 
     def __init__(self, view: "SimulationView", **kwargs) -> None:
         self.view = view
@@ -163,11 +166,11 @@ class BrainMap(BoxLayout):
             children: list[NeuronMap | Label] = [NeuronMap(neuron) for neuron in layer]
             label = LayerLabel(str(len(children)))
             children.insert(0, label)
-            layer_map = BoxLayout(children = children, space_between = self.gap)
+            layer_map = BoxLayout(children = children, space_between = self.space_between_neurons)
             layer_maps.append(layer_map)
 
-        super().__init__(vertical = False, children = layer_maps, space_between = self.gap * 4, **kwargs)
-        self.with_padding(all = self.gap)
+        super().__init__(vertical = False, children = layer_maps, space_between = self.space_between_layers, **kwargs)
+        self.with_padding(top = self.gap[0], right = self.gap[1], bottom = self.gap[2], left = self.gap[3])
         self.fit_content()
         self.with_background(
             texture = Texture.create_rounded_rectangle(

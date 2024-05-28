@@ -35,10 +35,10 @@ class InfoBox(BoxLayout):
         self.auto_increment_label = Label(text = self.view.displayed_auto_increment, **label_kwargs)
         self.add(self.auto_increment_label)
 
-        self.fit_content()
         self.with_padding(all = self.gap)
+        self.fit_content()
         self.with_background(texture = Texture.create_rounded_rectangle(self.size))
-        self.move_to(self.view.info_button.right + 1, self.view.window.height - 1, Anchor.X.LEFT, Anchor.Y.TOP)
+        self.move_to(self.view.info_button.right, self.view.window.height, Anchor.X.LEFT, Anchor.Y.TOP)
 
 
 class InfoButton(TextureButton):

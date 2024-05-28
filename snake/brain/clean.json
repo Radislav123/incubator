@@ -5,6 +5,54 @@
                 0
             ],
             "class": "Neuron"
+        },
+        {
+            "input_weights": [
+                0
+            ],
+            "class": "Neuron"
+        },
+        {
+            "input_weights": [
+                0
+            ],
+            "class": "Neuron"
+        },
+        {
+            "input_weights": [
+                0
+            ],
+            "class": "Neuron"
+        },
+        {
+            "input_weights": [
+                0
+            ],
+            "class": "Neuron"
+        },
+        {
+            "input_weights": [
+                0
+            ],
+            "class": "Neuron"
+        },
+        {
+            "input_weights": [
+                0
+            ],
+            "class": "Neuron"
+        },
+        {
+            "input_weights": [
+                0
+            ],
+            "class": "Neuron"
+        },
+        {
+            "input_weights": [
+                0
+            ],
+            "class": "Neuron"
         }
     ],
     [

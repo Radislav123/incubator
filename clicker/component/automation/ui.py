@@ -48,10 +48,10 @@ class AutomationBox(BoxLayout):
         for button in self.automation_buttons:
             self.add(button)
 
-        self.fit_content()
         self.with_padding(all = self.gap)
+        self.fit_content()
         self.with_background(texture = Texture.create_rounded_rectangle(self.size))
-        self.move_to(self.view.automation_box_button.right + 1, 0, Anchor.X.LEFT, Anchor.Y.DOWN)
+        self.move_to(self.view.automation_box_button.right, 0, Anchor.X.LEFT, Anchor.Y.DOWN)
 
 
 class Button(TextureButton):
