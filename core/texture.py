@@ -15,13 +15,16 @@ class Texture(ArcadeTexture):
     from_texture_counter = 0
 
     @classmethod
-    def from_texture(cls, texture: arcade.Texture) -> Self:
+    def from_texture(cls, texture: arcade.Texture, cache_name: str = None) -> Self:
+        if cache_name is None:
+            cache_name = str(cls.from_texture_counter)
+
         cls.from_texture_counter += 1
         return cls(
             texture.image.copy(),
             hit_box_algorithm = texture.hit_box_algorithm,
             hit_box_points = texture.hit_box_points,
-            hash = str(cls.from_texture_counter)
+            hash = cache_name
         )
 
     @staticmethod
