@@ -5,6 +5,7 @@ from arcade.gui import UIOnClickEvent, UITextureButton
 
 from core.service.anchor import Anchor
 from core.ui.button import TextureButton
+from core.ui.layout import BoxLayout
 from core.view.simulation import ExitButton as CoreExitButton, SimulationView as CoreSimulationView
 from snake.component.arena import Arena
 from snake.component.brain import Brain
@@ -40,12 +41,12 @@ class ExitButton(SnakeStyleButtonMixin, CoreExitButton):
 
 
 class SpeedButton(SnakeStyleButtonMixin, TextureButton):
-    def __init__(self, view: "SimulationView", *args, **kwargs) -> None:
+    def __init__(self, view: "SimulationView", **kwargs) -> None:
         self.base_speed = 1
         self.speed = self.base_speed
         self.speed_multiplier = 2
         self.max_speed = 64
-        super().__init__(*args, text = self.get_text(), **kwargs)
+        super().__init__(text = self.get_text(), **kwargs)
         self.view = view
 
     def get_text(self) -> str:
@@ -63,6 +64,26 @@ class SpeedButton(SnakeStyleButtonMixin, TextureButton):
         self.update_text()
 
 
+class PauseButton(SnakeStyleButtonMixin, TextureButton):
+    texts = {
+        True: "Продолжить",
+        False: "Остановить"
+    }
+
+    def __init__(self, view: "SimulationView", **kwargs) -> None:
+        self.enabled = True
+        super().__init__(text = self.texts[self.enabled], **kwargs)
+        self.view = view
+
+    def update_text(self) -> None:
+        if (text := self.texts[self.enabled]) != self.text:
+            self.text = text
+
+    def on_click(self, event: UIOnClickEvent) -> None:
+        self.enabled = not self.enabled
+        self.update_text()
+
+
 class SimulationView(CoreSimulationView):
     settings = Settings()
     update_rate = 1 / 10**10
@@ -70,6 +91,7 @@ class SimulationView(CoreSimulationView):
 
     exit_button_class = ExitButton
     speed_button: SpeedButton
+    pause_button: PauseButton
 
     world: World
     arena: Arena = None
@@ -101,17 +123,25 @@ class SimulationView(CoreSimulationView):
         arena = Arena(snake, world_map)
         return arena
 
-    def prepare_speed_button(self) -> None:
+    def prepare_buttons(self) -> None:
+        layout = BoxLayout()
+
         self.speed_button = SpeedButton(self)
-        self.speed_button.move_to(self.window.width, 0, Anchor.X.RIGHT, Anchor.Y.DOWN)
-        self.ui_manager.add(self.speed_button)
+        layout.add(self.speed_button)
+
+        self.pause_button = PauseButton(self)
+        layout.add(self.pause_button)
+
+        layout.fit_content()
+        layout.move_to(self.window.width, 0, Anchor.X.RIGHT, Anchor.Y.DOWN)
+        self.ui_manager.add(layout)
 
     def prepare_world(self) -> None:
         self.world = World(self)
 
     def on_show_view(self) -> None:
         super().on_show_view()
-        self.prepare_speed_button()
+        self.prepare_buttons()
         self.prepare_world()
         self.snake_released = False
         self.snake_perform_timer = 0
@@ -129,7 +159,7 @@ class SimulationView(CoreSimulationView):
         self.world.all_tiles.draw()
 
     def on_update(self, delta_time: float) -> None:
-        if self.snake_released:
+        if self.snake_released and not self.pause_button.enabled:
             self.snake_perform_timer += delta_time
             if self.arena is not None:
                 self.snake_perform_timer += delta_time
