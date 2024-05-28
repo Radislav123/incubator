@@ -37,8 +37,8 @@ class Texture(ArcadeTexture):
             # в пикселях
             border_thickness: int = 2,
             rounding_radius: int = None,
-            color: Color = Color.NORMAL,
-            border_color: Color = Color.BORDER
+            color: Color.type = Color.NORMAL,
+            border_color: Color.type = Color.BORDER
     ) -> Self:
         size = list(size)
         for dimension in range(len(size)):

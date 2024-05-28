@@ -1,9 +1,11 @@
 import copy
 import json
 
+import PIL.Image
 from arcade.gui import UIOnClickEvent, UITextureButton
 
 from core.service.anchor import Anchor
+from core.texture import Texture
 from core.ui.button import TextureButton
 from core.ui.layout import BoxLayout
 from core.view.simulation import ExitButton as CoreExitButton, SimulationView as CoreSimulationView
@@ -65,23 +67,43 @@ class SpeedButton(SnakeStyleButtonMixin, TextureButton):
 
 
 class PauseButton(SnakeStyleButtonMixin, TextureButton):
-    texts = {
-        True: "Продолжить",
-        False: "Остановить"
-    }
+    default_textures: dict[bool, dict[str, Texture]] = None
 
     def __init__(self, view: "SimulationView", **kwargs) -> None:
-        self.enabled = True
-        super().__init__(text = self.texts[self.enabled], **kwargs)
         self.view = view
+        self.enabled = True
+        kwargs.update(self.get_textures_init())
+        super().__init__(**kwargs)
 
-    def update_text(self) -> None:
-        if (text := self.texts[self.enabled]) != self.text:
-            self.text = text
+    def get_textures_init(self) -> dict[str, Texture]:
+        if self.default_textures is None:
+            default_textures = {
+                "normal": Texture.create_rounded_rectangle(color = Color.NORMAL),
+                "hover": Texture.create_rounded_rectangle(color = Color.HOVERED),
+                "press": Texture.create_rounded_rectangle(color = Color.PRESSED),
+                "disabled": Texture.create_rounded_rectangle(color = Color.DISABLED)
+            }
+            images = {
+                True: PIL.Image.open(f"{self.settings.IMAGES_FOLDER}/play_0.png"),
+                False: PIL.Image.open(f"{self.settings.IMAGES_FOLDER}/pause_0.png")
+            }
+            self.__class__.default_textures = {button_state: {state: Texture.from_texture(texture).with_image(image)
+                                                              for state, texture in default_textures.items()}
+                                               for button_state, image in images.items()}
+
+        return {
+            "texture": self.default_textures[self.enabled]["normal"],
+            "texture_hovered": self.default_textures[self.enabled]["hover"],
+            "texture_pressed": self.default_textures[self.enabled]["press"],
+            "texture_disabled": self.default_textures[self.enabled]["disabled"]
+        }
+
+    def update_textures(self) -> None:
+        self._textures = self.default_textures[self.enabled]
 
     def on_click(self, event: UIOnClickEvent) -> None:
         self.enabled = not self.enabled
-        self.update_text()
+        self.update_textures()
 
 
 class SimulationView(CoreSimulationView):

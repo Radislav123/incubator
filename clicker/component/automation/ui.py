@@ -58,7 +58,7 @@ class Button(TextureButton):
     settings = Settings()
     enabled: bool
 
-    default_textures: dict[bool | None, dict[str: Texture]]
+    default_textures: dict[bool | None, dict[str, Texture]]
     button_image_path: str
     default_textures_changed = False
 
