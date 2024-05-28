@@ -77,6 +77,9 @@ class SimulationView(CoreSimulationView):
             tile.update_color()
         self.world.all_tiles.draw()
 
+        if self.snake_released:
+            self.brain_map.synapses.draw()
+
     def on_update(self, delta_time: float) -> None:
         if self.snake_released and not self.pause_button.enabled:
             self.snake_perform_timer += delta_time

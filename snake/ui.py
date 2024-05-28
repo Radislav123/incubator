@@ -1,7 +1,9 @@
 from typing import TYPE_CHECKING
 
 import PIL.Image
+import arcade.shape_list
 from arcade.gui import UIOnClickEvent, UITextureButton
+from arcade.shape_list import ShapeElementList
 
 from core.texture import Texture
 from core.ui.button import TextureButton
@@ -179,3 +181,36 @@ class BrainMap(BoxLayout):
                 border_color = Color.BORDER
             )
         )
+
+        self.synapses = ShapeElementList()
+        self.prepare_synapses()
+
+    def prepare_synapses(self) -> None:
+        layers = self.children
+        layers_space = self.space_between_layers
+        neurons_space = self.space_between_neurons
+        diameter = NeuronMap.radius * 2
+        synapse_width = 0.5
+        max_layer = max(len(x.children) for x in layers)
+
+        for index in range(len(layers[0].children) - 1):
+            x_0 = self.gap[3] // 2
+            x_1 = self.gap[3]
+            y = (self.view.window.height - NeuronMap.radius - self.gap[1] - neurons_space
+                 - (diameter + neurons_space) * index)
+            synapse = arcade.shape_list.create_line(x_0, y, x_1, y, Color.SYNAPSE_ACTIVE, synapse_width)
+            self.synapses.append(synapse)
+
+        for layer_index in range(len(layers) - 1):
+            layer_0 = layers[layer_index]
+            layer_1 = layers[layer_index + 1]
+            for index_0 in range(len(layer_0.children) - 1):
+                x_0 = self.gap[3] + diameter + (diameter + layers_space) * layer_index
+                x_1 = self.gap[3] + (diameter + layers_space) * (layer_index + 1)
+                y_0 = (self.view.window.height - NeuronMap.radius - self.gap[1] - neurons_space
+                       - (neurons_space + diameter) * (((max_layer - len(layer_0.children)) / 2) + index_0))
+                for index_1 in range(len(layer_1.children) - 1):
+                    y_1 = (self.view.window.height - NeuronMap.radius - self.gap[1] - neurons_space
+                           - (neurons_space + diameter) * (((max_layer - len(layer_1.children)) / 2) + index_1))
+                    synapse = arcade.shape_list.create_line(x_0, y_0, x_1, y_1, Color.SYNAPSE_ACTIVE, synapse_width)
+                    self.synapses.append(synapse)
