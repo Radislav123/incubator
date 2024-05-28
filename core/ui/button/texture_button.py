@@ -17,8 +17,8 @@ class TextureButton(UITextureButton, MovableWidgetMixin):
         "texture_pressed": Color.PRESSED,
         "texture_disabled": Color.DISABLED
     }
-    normal_style = UITextureButton.UIStyle(font_size = 12, font_name = settings.FONTS, font_color = Color.TEXT)
-    hovered_style = UITextureButton.UIStyle(font_size = 14, font_name = settings.FONTS, font_color = Color.TEXT)
+    normal_style = UITextureButton.UIStyle(font_size = 14, font_name = settings.FONTS, font_color = Color.TEXT)
+    hovered_style = UITextureButton.UIStyle(font_size = 16, font_name = settings.FONTS, font_color = Color.TEXT)
     DEFAULT_STYLE = {
         "normal": normal_style,
         "hover": hovered_style,

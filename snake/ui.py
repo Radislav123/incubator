@@ -6,6 +6,7 @@ from arcade.gui import UIOnClickEvent, UITextureButton
 from core.texture import Texture
 from core.ui.button import TextureButton
 from core.ui.layout import BoxLayout
+from core.ui.text import Label
 from core.view.simulation import ExitButton as CoreExitButton
 from snake.service.color import Color
 from snake.settings import Settings
@@ -26,8 +27,8 @@ class SnakeStyleButtonMixin:
         "texture_pressed": Color.PRESSED,
         "texture_disabled": Color.DISABLED
     }
-    normal_style = UITextureButton.UIStyle(font_size = 12, font_name = settings.FONTS, font_color = Color.TEXT)
-    hovered_style = UITextureButton.UIStyle(font_size = 14, font_name = settings.FONTS, font_color = Color.TEXT)
+    normal_style = UITextureButton.UIStyle(font_size = 14, font_name = settings.FONTS, font_color = Color.TEXT)
+    hovered_style = UITextureButton.UIStyle(font_size = 16, font_name = settings.FONTS, font_color = Color.TEXT)
     DEFAULT_STYLE = {
         "normal": normal_style,
         "hover": hovered_style,
@@ -132,11 +133,23 @@ class RestartButton(SnakeStyleButtonMixin, TextureButton):
 
 
 class NeuronMap(SnakeStyleButtonMixin, TextureButton):
+    radius = 20
+
     def __init__(self, neuron: "Neuron", **kwargs) -> None:
-        radius = 20
-        texture = Texture.create_circle(radius, color = Color.NEURON_SLEEP)
-        super().__init__(texture = texture, width = radius * 2, height = radius * 2, **kwargs)
+        texture = Texture.create_circle(self.radius, color = Color.NEURON_SLEEP)
+        super().__init__(texture = texture, width = self.radius * 2, height = self.radius * 2, **kwargs)
         self.neuron = neuron
+
+
+class LayerLabel(SnakeStyleButtonMixin, Label):
+    def __init__(self, text: str, **kwargs) -> None:
+        super().__init__(
+            text = text,
+            width = NeuronMap.radius,
+            height = NeuronMap.radius,
+            color = Color.NORMAL,
+            **kwargs
+        )
 
 
 class BrainMap(BoxLayout):
@@ -145,10 +158,15 @@ class BrainMap(BoxLayout):
     def __init__(self, view: "SimulationView", **kwargs) -> None:
         self.view = view
         self.brain = self.view.arena.snake.brain
-        layers = [BoxLayout(children = [NeuronMap(neuron) for neuron in layer], space_between = self.gap)
-                  for layer in self.brain.layers]
+        layer_maps = []
+        for layer in self.brain.layers:
+            children: list[NeuronMap | Label] = [NeuronMap(neuron) for neuron in layer]
+            label = LayerLabel(str(len(children)))
+            children.insert(0, label)
+            layer_map = BoxLayout(children = children, space_between = self.gap)
+            layer_maps.append(layer_map)
 
-        super().__init__(vertical = False, children = layers, space_between = self.gap * 4, **kwargs)
+        super().__init__(vertical = False, children = layer_maps, space_between = self.gap * 4, **kwargs)
         self.with_padding(all = self.gap)
         self.fit_content()
         self.with_background(
