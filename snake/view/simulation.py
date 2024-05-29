@@ -35,7 +35,7 @@ class SimulationView(CoreSimulationView):
     snake_training: bool = False
     current_generation: int | None
     max_generation: int = 10
-    batch_size: int = 10
+    generation_size: int = 10
     training_arena_index: int
     training_arenas: list[Arena] = None
     show_training = False
@@ -66,14 +66,16 @@ class SimulationView(CoreSimulationView):
         return arena
 
     def prepare_brain_map(self) -> None:
-        self.brain_map = BrainMap(self)
+        if self.brain_map is not None:
+            self.ui_manager.remove(self.brain_map)
 
+        self.brain_map = BrainMap(self)
         self.brain_map.move_to(0, self.window.height, Anchor.X.LEFT, Anchor.Y.TOP)
         self.ui_manager.add(self.brain_map)
 
     def prepare_training_arenas(self) -> None:
         self.training_arenas = [Arena(self.reference_brain.mutate(), copy.deepcopy(self.world.reference_map))
-                                for _ in range(self.batch_size - 1)]
+                                for _ in range(self.generation_size - 1)]
         self.training_arenas.append(Arena(self.reference_brain, copy.deepcopy(self.world.reference_map)))
         self.training_arena_index = 0
         if self.current_generation is None:
@@ -95,6 +97,7 @@ class SimulationView(CoreSimulationView):
         self.reference_brain = Brain.get_default()
         self.prepare_training_arenas()
         self.snake_training = True
+        self.show_training = True
 
         # todo: remove 3 lines
         # self.released_arena = self.create_arena()
@@ -123,36 +126,36 @@ class SimulationView(CoreSimulationView):
         elif self.snake_training:
             latency = 0
             cycles = 100
-            while latency < self.max_latency:
+            generation_trained = False
+
+            while latency < self.max_latency and not generation_trained:
                 start = time.time()
-                if not self.train(cycles):
-                    self.snake_training = False
-                    break
+                generation_trained = self.train(cycles)
                 finish = time.time()
                 latency += finish - start
-        elif self.current_generation < self.max_generation:
-            self.prepare_training_arenas()
-            scores = {arena.snake.get_score(): arena.snake.brain for arena in self.training_arenas}
-            self.reference_brain = scores[max(scores)]
-            self.snake_training = True
+
+            if generation_trained and self.current_generation < self.max_generation:
+                self.prepare_training_arenas()
+                scores = {arena.snake.get_score(): arena.snake.brain for arena in self.training_arenas}
+                self.reference_brain = scores[max(scores)]
 
     def train(self, cycles: int) -> bool:
         for _ in range(cycles):
-            if self.training_arena_index < self.batch_size:
+            if self.training_arena_index < self.generation_size:
                 arena = self.training_arenas[self.training_arena_index]
                 if arena.snake.alive:
                     arena.perform()
                 else:
                     self.training_arena_index += 1
-                    if self.show_training and self.training_arena_index < self.batch_size:
+                    if self.show_training and self.training_arena_index < self.generation_size:
                         self.released_arena = self.training_arenas[self.training_arena_index]
                         self.prepare_brain_map()
             else:
-                train_further = False
+                generation_trained = True
                 break
         else:
-            train_further = True
-        return train_further
+            generation_trained = False
+        return generation_trained
 
     def on_mouse_press(self, x: int, y: int, button: int, modifiers: int) -> None:
         super().on_mouse_press(x, y, button, modifiers)

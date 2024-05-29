@@ -92,10 +92,10 @@ class Snake:
 
     def eat(self) -> None:
         if self.world_map.food[self.head.x][self.head.y]:
-            # todo: rewrite it
-            pass
-            # self.starvation = 0
-            # self.world_map.place_food()
+            self.starvation = 0
+            # todo: добавлять сегмент
+            self.world_map.food[self.head.x][self.head.y] = False
+            self.world_map.place_food()
         else:
             self.starvation += 1
 

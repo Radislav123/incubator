@@ -17,7 +17,6 @@ class Map:
         self.borders = copy.deepcopy(default_map)
         self.snake = copy.deepcopy(default_map)
         self.food = copy.deepcopy(default_map)
-        self.food_position: tuple[int, int] | None = None
 
         self.offsets = (
             (1, 0),
@@ -54,9 +53,6 @@ class Map:
                     index += 1
 
     def place_food(self) -> None:
-        if self.food_position is not None:
-            self.food_position[self.food_position[0]][self.food_position[1]] = None
-
         free_tiles = [(x, y) for x in range(self.square_side_length) for y in range(self.square_side_length)
                       if self.surface[x][y] and not self.borders[x][y] and not self.snake[x][y]]
         tile = free_tiles[random.randint(0, len(free_tiles) - 1)]
