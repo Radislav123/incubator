@@ -52,11 +52,12 @@ class Snake:
             x, y = segment.move_to(x, y)
 
     def choose_direction(self) -> None:
-        self.brain.process([0])
+        # todo: change inputs
+        self.brain.process([0 for _ in range(9)])
 
         directions_amount = len(self.world_map.offsets)
         direction_change = self.brain.output + directions_amount
-        self.direction = (self.direction + direction_change) % direction_change
+        self.direction = (self.direction + direction_change) % directions_amount
 
     def eat(self) -> None:
         if self.world_map.food[self.head.x][self.head.y]:

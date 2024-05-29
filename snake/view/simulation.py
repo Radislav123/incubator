@@ -80,6 +80,8 @@ class SimulationView(CoreSimulationView):
 
         if self.snake_released:
             self.brain_map.synapses.draw()
+            for neuron_map in self.brain_map.all_neuron_maps:
+                neuron_map.update_texture()
 
     def on_update(self, delta_time: float) -> None:
         if self.snake_released and not self.pause_button.enabled:

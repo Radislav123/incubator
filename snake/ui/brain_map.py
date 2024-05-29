@@ -3,27 +3,49 @@ from typing import TYPE_CHECKING
 import arcade.shape_list
 from arcade.shape_list import ShapeElementList
 
+from core.service.functions import float_range
 from core.texture import Texture
 from core.ui.button.texture_button import TextureButton
 from core.ui.layout.box_layout import BoxLayout
 from core.ui.text.label import Label
+from snake.component.brain import Neuron
 from snake.service.color import Color
 from snake.settings import Settings
 from snake.ui.mixin import SnakeStyleButtonMixin
 
 
 if TYPE_CHECKING:
-    from snake.component.brain import Neuron
     from snake.view.simulation import SimulationView
 
 
 class NeuronMap(SnakeStyleButtonMixin, TextureButton):
     radius = 20
+    default_textures: dict[float, Texture] = None
 
-    def __init__(self, neuron: "Neuron", **kwargs) -> None:
-        texture = Texture.create_circle(self.radius, color = Color.NEURON_SLEEP)
-        super().__init__(texture = texture, width = self.radius * 2, height = self.radius * 2, **kwargs)
+    output_step = 0.1
+    outputs = list(float_range(*Neuron.output_borders, output_step))
+
+    def __init__(self, neuron: Neuron, **kwargs) -> None:
         self.neuron = neuron
+        texture = self.get_texture()
+        super().__init__(width = texture.width, height = texture.height, texture = texture, **kwargs)
+
+    def get_texture(self) -> Texture:
+        if self.default_textures is None:
+            self.__class__.default_textures = {}
+            color_length = len(Color.NEURON_ACTIVE)
+            color_difference = [Color.NEURON_ACTIVE[i] - Color.NEURON_SLEEP[i] for i in range(color_length)]
+
+            for output in self.outputs:
+                color = tuple(int(Color.NEURON_SLEEP[i] + color_difference[i] * output) for i in range(color_length))
+                texture = Texture.create_circle(self.radius, color = color)
+                self.__class__.default_textures[output] = texture
+
+        nearest_key = min(self.default_textures, key = lambda key: abs(key - self.neuron.output))
+        return self.default_textures[nearest_key]
+
+    def update_texture(self) -> None:
+        self.texture = self.get_texture()
 
 
 class LayerLabel(SnakeStyleButtonMixin, Label):
@@ -46,12 +68,16 @@ class BrainMap(BoxLayout):
     def __init__(self, view: "SimulationView", **kwargs) -> None:
         self.view = view
         self.brain = self.view.arena.snake.brain
+        self.all_neuron_maps = []
         layer_maps = []
         for layer in self.brain.layers:
-            children: list[NeuronMap | Label] = [NeuronMap(neuron) for neuron in layer]
-            label = LayerLabel(str(len(children)))
-            children.insert(0, label)
-            layer_map = BoxLayout(children = children, space_between = self.space_between_neurons)
+            neuron_maps: list[NeuronMap | Label] = [NeuronMap(neuron) for neuron in layer]
+            self.all_neuron_maps.extend(neuron_maps)
+
+            label = LayerLabel(str(len(neuron_maps)))
+            neuron_maps.insert(0, label)
+
+            layer_map = BoxLayout(children = neuron_maps, space_between = self.space_between_neurons)
             layer_maps.append(layer_map)
 
         super().__init__(vertical = False, children = layer_maps, space_between = self.space_between_layers, **kwargs)

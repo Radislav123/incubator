@@ -40,7 +40,9 @@ class Texture(ArcadeTexture):
             # в пикселях
             border_thickness: int = 2,
             color: Color.type = Color.NORMAL,
-            border_color: Color.type = Color.BORDER
+            border_color: Color.type = Color.BORDER,
+            background_color: Color.type = Color.BACKGROUND,
+            transparent_background: bool = True
     ) -> Self:
         if rounding_radius is None:
             rounding_radius = min(size) // 10
@@ -57,7 +59,15 @@ class Texture(ArcadeTexture):
             size[1] / 2
         )
 
-        texture = cls.create_by_figure(figure, inner_figure, size, color, border_color)
+        texture = cls.create_by_figure(
+            figure,
+            inner_figure,
+            size,
+            color,
+            border_color,
+            background_color,
+            transparent_background
+        )
         return texture
 
     @classmethod
@@ -66,14 +76,24 @@ class Texture(ArcadeTexture):
             cls,
             radius: int | float = 25,
             # в пикселях
-            border_thickness: int = 2,
+            border_thickness: int = 3,
             color: Color.type = Color.NORMAL,
-            border_color: Color.type = Color.BORDER
+            border_color: Color.type = Color.BORDER,
+            background_color: Color.type = Color.BACKGROUND,
+            transparent_background: bool = True
     ) -> Self:
         figure = cls.get_figure(Circle, radius, radius, radius)
         inner_radius = radius - border_thickness / 2
-        inner_figure = cls.get_figure(Circle, inner_radius, inner_radius, inner_radius)
-        texture = cls.create_by_figure(figure, inner_figure, (radius * 2, radius * 2), color, border_color)
+        inner_figure = cls.get_figure(Circle, inner_radius, radius, radius)
+        texture = cls.create_by_figure(
+            figure,
+            inner_figure,
+            (radius * 2, radius * 2),
+            color,
+            border_color,
+            background_color,
+            transparent_background
+        )
         return texture
 
     @classmethod
@@ -84,7 +104,9 @@ class Texture(ArcadeTexture):
             inner_figure: ClosedFigure,
             size: tuple[int | float, int | float] = (100, 50),
             color: Color.type = Color.NORMAL,
-            border_color: Color.type = Color.BORDER
+            border_color: Color.type = Color.BORDER,
+            background_color: Color.type = Color.BACKGROUND,
+            transparent_background: bool = True
     ) -> Self:
         size = list(size)
         for dimension in range(len(size)):
@@ -111,6 +133,10 @@ class Texture(ArcadeTexture):
                         border_mask.putpixel((x, y), 255)
             colored.putalpha(alpha)
             image = Image.composite(image, colored, border_mask)
+
+        if not transparent_background and (background_color != color or background_color != border_color):
+            background = Image.new("RGBA", size, background_color)
+            image = Image.composite(image, background, image.getchannel(3))
 
         return Texture(image)
 

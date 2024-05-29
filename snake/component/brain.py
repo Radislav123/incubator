@@ -8,6 +8,7 @@ from typing import Self
 class Neuron:
     max_mutation_spread = 0.1
     weight_borders = [-1, 1]
+    output_borders = [0, 1]
 
     def __init__(self, input_weights: list[float], *args, **kwargs) -> None:
         self.input_weights = input_weights
@@ -19,7 +20,7 @@ class Neuron:
 
     # todo: write it
     def process(self, inputs: list[float]) -> None:
-        self.output = 0
+        self.output = random.random()
 
     def dump(self) -> dict:
         data = {key: value for key, value in self.__dict__.items()
@@ -92,6 +93,10 @@ class Brain:
         return brain
 
     def process(self, inputs: list[float]) -> None:
+        for index, neuron in enumerate(self.layers[0]):
+            neuron.process(inputs[index])
+        inputs = [x.output for x in self.layers[0]]
+
         for layer in self.layers:
             for neuron in layer:
                 neuron.process(inputs)
