@@ -1,5 +1,3 @@
-import random
-
 from snake.component.brain import Brain
 from snake.component.map import Map
 from snake.service.color import Color
@@ -93,9 +91,7 @@ class Snake:
     def eat(self) -> None:
         if self.world_map.food[self.head.x][self.head.y]:
             self.starvation = 0
-            # todo: добавлять сегмент
             self.world_map.food[self.head.x][self.head.y] = False
-            self.world_map.place_food()
         else:
             self.starvation += 1
 
@@ -109,13 +105,16 @@ class Snake:
 
         self.alive = not (border_collision or segment_collision or starvation_death)
         if self.alive:
+            tail_x = self.segments[-1].x
+            tail_y = self.segments[-1].y
             self.move(move_x, move_y)
             self.eat()
+            if self.starvation == 0:
+                self.add_segment(tail_x, tail_y)
         else:
             Segment.color = Color.SNAKE_DEAD
 
         self.age += 1
 
     def get_score(self) -> float:
-        # todo: write it
-        return random.random()
+        return len(self.segments)

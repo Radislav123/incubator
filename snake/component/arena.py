@@ -34,3 +34,5 @@ class Arena:
 
     def perform(self) -> None:
         self.snake.perform()
+        if self.snake.starvation == 0:
+            self.world_map.place_food()
