@@ -12,15 +12,19 @@ class Neuron:
 
     def __init__(self, input_weights: list[float], *args, **kwargs) -> None:
         self.input_weights = input_weights
+        self.inputs_amount = len(self.input_weights)
         self.output: float = 0
 
     @classmethod
     def get_default(cls, input_weights: list[float], *args, **kwargs) -> Self:
         return cls(input_weights, *args, **kwargs)
 
-    # todo: write it
     def process(self, inputs: list[float]) -> None:
-        self.output = random.random()
+        value = sum(inputs[x] * self.input_weights[x] for x in range(self.inputs_amount))
+        if value > 1:
+            self.output = 1
+        else:
+            self.output = 0
 
     def dump(self) -> dict:
         data = {key: value for key, value in self.__dict__.items()
@@ -50,6 +54,9 @@ class OutputNeuron(Neuron):
 
     def __gt__(self, other: "OutputNeuron") -> bool:
         return self.output > other.output
+
+    def mutate(self) -> Self:
+        return self.__class__([self.mutate_input_weight(weight) for weight in self.input_weights], self.value)
 
 
 class Brain:
@@ -94,7 +101,7 @@ class Brain:
 
     def process(self, inputs: list[float]) -> None:
         for index, neuron in enumerate(self.layers[0]):
-            neuron.process(inputs[index])
+            neuron.process(inputs[index: index + 1])
         inputs = [x.output for x in self.layers[0]]
 
         for layer in self.layers:

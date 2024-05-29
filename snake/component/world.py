@@ -80,11 +80,12 @@ class Tile(Sprite):
         self.world.tile_borders.remove(self.border)
 
     def update_color(self) -> None:
-        arena = self.world.view.arena
-        if self.world.view.snake_released and arena.world_map.snake[self.map_x][self.map_y]:
+        arena = self.world.view.released_arena
+        show = (self.world.view.snake_released or self.world.view.show_training) and arena is not None
+        if show and arena.world_map.snake[self.map_x][self.map_y]:
             snake = arena.snake
             color = snake.colors[snake.alive]
-        elif self.world.view.snake_released and arena.world_map.food[self.map_x][self.map_y]:
+        elif show and arena.world_map.food[self.map_x][self.map_y]:
             color = Color.FOOD
         else:
             color = self.colors[self.enabled]

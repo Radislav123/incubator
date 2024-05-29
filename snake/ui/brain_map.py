@@ -67,7 +67,7 @@ class BrainMap(BoxLayout):
 
     def __init__(self, view: "SimulationView", **kwargs) -> None:
         self.view = view
-        self.brain = self.view.arena.snake.brain
+        self.brain = self.view.released_arena.snake.brain
         self.all_neuron_maps = []
         layer_maps = []
         for layer in self.brain.layers:

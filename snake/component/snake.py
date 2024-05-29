@@ -1,3 +1,5 @@
+import random
+
 from snake.component.brain import Brain
 from snake.component.map import Map
 from snake.service.color import Color
@@ -36,7 +38,7 @@ class Snake:
 
         self.age = 0
         self.starvation = 0
-        self.max_starvation = 1000
+        self.max_starvation = 300
         self.alive = True
         self.direction = 0
 
@@ -90,7 +92,10 @@ class Snake:
 
     def eat(self) -> None:
         if self.world_map.food[self.head.x][self.head.y]:
-            self.starvation = 0
+            # todo: rewrite it
+            pass
+            # self.starvation = 0
+            # self.world_map.place_food()
         else:
             self.starvation += 1
 
@@ -110,3 +115,7 @@ class Snake:
             Segment.color = Color.SNAKE_DEAD
 
         self.age += 1
+
+    def get_score(self) -> float:
+        # todo: write it
+        return random.random()

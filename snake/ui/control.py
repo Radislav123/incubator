@@ -94,5 +94,5 @@ class RestartButton(SnakeStyleButtonMixin, TextureButton):
         super().__init__(**kwargs)
 
     def on_click(self, event: UIOnClickEvent) -> None:
-        self.view.arena = self.view.create_arena()
+        self.view.released_arena = self.view.create_arena()
         self.view.prepare_brain_map()

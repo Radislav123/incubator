@@ -1,9 +1,11 @@
 import copy
+import time
 
 from core.service.anchor import Anchor
 from core.ui.layout.box_layout import BoxLayout
 from core.view.simulation import SimulationView as CoreSimulationView
 from snake.component.arena import Arena
+from snake.component.brain import Brain
 from snake.component.world import World
 from snake.service.color import Color
 from snake.settings import Settings
@@ -14,6 +16,7 @@ from snake.ui.control import ExitButton, PauseButton, RestartButton, SpeedButton
 class SimulationView(CoreSimulationView):
     settings = Settings()
     update_rate = 1 / 10**10
+    max_latency = 1 / 100
     background_color = Color.BACKGROUND
 
     exit_button_class = ExitButton
@@ -22,23 +25,20 @@ class SimulationView(CoreSimulationView):
     restart_button: RestartButton
 
     world: World
-    arena: Arena = None
     snake_perform_timer: float
-    snake_released: bool
-    brain_path = None
-    brain_map: BrainMap
+    released_arena: Arena = None
+    snake_released: bool = False
+    brain_map: BrainMap = None
 
-    def create_arena(self) -> Arena:
-        world_map = copy.deepcopy(self.world.reference_map)
-        arena = Arena(self.brain_path, world_map)
-        self.snake_perform_timer = 0
-        return arena
-
-    def prepare_brain_map(self) -> None:
-        self.brain_map = BrainMap(self)
-
-        self.brain_map.move_to(0, self.window.height, Anchor.X.LEFT, Anchor.Y.TOP)
-        self.ui_manager.add(self.brain_map)
+    brain: Brain | str | None = None
+    reference_brain: Brain
+    snake_training: bool = False
+    current_generation: int | None
+    max_generation: int = 10
+    batch_size: int = 10
+    training_arena_index: int
+    training_arenas: list[Arena] = None
+    show_training = False
 
     def prepare_buttons(self) -> None:
         layout = BoxLayout()
@@ -59,16 +59,47 @@ class SimulationView(CoreSimulationView):
     def prepare_world(self) -> None:
         self.world = World(self)
 
+    def create_arena(self) -> Arena:
+        world_map = copy.deepcopy(self.world.reference_map)
+        arena = Arena(self.brain, world_map)
+        self.snake_perform_timer = 0
+        return arena
+
+    def prepare_brain_map(self) -> None:
+        self.brain_map = BrainMap(self)
+
+        self.brain_map.move_to(0, self.window.height, Anchor.X.LEFT, Anchor.Y.TOP)
+        self.ui_manager.add(self.brain_map)
+
+    def prepare_training_arenas(self) -> None:
+        self.training_arenas = [Arena(self.reference_brain.mutate(), copy.deepcopy(self.world.reference_map))
+                                for _ in range(self.batch_size - 1)]
+        self.training_arenas.append(Arena(self.reference_brain, copy.deepcopy(self.world.reference_map)))
+        self.training_arena_index = 0
+        if self.current_generation is None:
+            self.current_generation = 0
+        else:
+            self.current_generation += 1
+
+        if self.show_training:
+            self.released_arena = self.training_arenas[self.training_arena_index]
+            self.prepare_brain_map()
+
     def on_show_view(self) -> None:
         super().on_show_view()
         self.prepare_buttons()
         self.prepare_world()
-        self.snake_released = False
+        self.current_generation = None
+
+        # todo: rewrite this lines
+        self.reference_brain = Brain.get_default()
+        self.prepare_training_arenas()
+        self.snake_training = True
 
         # todo: remove 3 lines
-        self.arena = self.create_arena()
-        self.prepare_brain_map()
-        self.snake_released = True
+        # self.released_arena = self.create_arena()
+        # self.prepare_brain_map()
+        # self.snake_released = True
 
     def on_draw(self) -> None:
         self.speed_button.update_text()
@@ -78,7 +109,7 @@ class SimulationView(CoreSimulationView):
             tile.update_color()
         self.world.all_tiles.draw()
 
-        if self.snake_released:
+        if (self.snake_released or self.show_training) and self.brain_map is not None:
             self.brain_map.synapses.draw()
             for neuron_map in self.brain_map.all_neuron_maps:
                 neuron_map.update_texture()
@@ -86,9 +117,42 @@ class SimulationView(CoreSimulationView):
     def on_update(self, delta_time: float) -> None:
         if self.snake_released and not self.pause_button.enabled:
             self.snake_perform_timer += delta_time
-            if self.arena.snake.alive and self.snake_perform_timer > (period := 1 / self.speed_button.speed):
+            if self.released_arena.snake.alive and self.snake_perform_timer > (period := 1 / self.speed_button.speed):
                 self.snake_perform_timer -= period
-                self.arena.snake.perform()
+                self.released_arena.perform()
+        elif self.snake_training:
+            latency = 0
+            cycles = 100
+            while latency < self.max_latency:
+                start = time.time()
+                if not self.train(cycles):
+                    self.snake_training = False
+                    break
+                finish = time.time()
+                latency += finish - start
+        elif self.current_generation < self.max_generation:
+            self.prepare_training_arenas()
+            scores = {arena.snake.get_score(): arena.snake.brain for arena in self.training_arenas}
+            self.reference_brain = scores[max(scores)]
+            self.snake_training = True
+
+    def train(self, cycles: int) -> bool:
+        for _ in range(cycles):
+            if self.training_arena_index < self.batch_size:
+                arena = self.training_arenas[self.training_arena_index]
+                if arena.snake.alive:
+                    arena.perform()
+                else:
+                    self.training_arena_index += 1
+                    if self.show_training and self.training_arena_index < self.batch_size:
+                        self.released_arena = self.training_arenas[self.training_arena_index]
+                        self.prepare_brain_map()
+            else:
+                train_further = False
+                break
+        else:
+            train_further = True
+        return train_further
 
     def on_mouse_press(self, x: int, y: int, button: int, modifiers: int) -> None:
         super().on_mouse_press(x, y, button, modifiers)
