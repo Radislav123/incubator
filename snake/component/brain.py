@@ -1,3 +1,4 @@
+import copy
 import inspect
 import random
 import sys
@@ -8,9 +9,13 @@ class Neuron:
     max_mutation_spread = 0.1
     weight_borders = [-1, 1]
 
-    def __init__(self, input_weights: list[float]) -> None:
+    def __init__(self, input_weights: list[float], *args, **kwargs) -> None:
         self.input_weights = input_weights
         self.output: float = 0
+
+    @classmethod
+    def get_default(cls, input_weights: list[float], *args, **kwargs) -> Self:
+        return cls(input_weights, *args, **kwargs)
 
     # todo: write it
     def process(self, inputs: list[float]) -> None:
@@ -38,7 +43,7 @@ class Neuron:
 
 
 class OutputNeuron(Neuron):
-    def __init__(self, input_weights: list[float], value: int) -> None:
+    def __init__(self, input_weights: list[float], value: int, *args, **kwargs) -> None:
         super().__init__(input_weights)
         self.value = value
 
@@ -50,6 +55,26 @@ class Brain:
     def __init__(self) -> None:
         self.layers: list[list[Neuron | OutputNeuron]] = []
         self.output: float = 0
+
+    @classmethod
+    def get_default(cls) -> Self:
+        input_neuron = {
+            "input_weights": [0],
+            "class": Neuron.__name__
+        }
+        input_layer = [copy.deepcopy(input_neuron) for _ in range(9)]
+
+        output_neuron = {
+            "input_weights": [0] * len(input_layer),
+            "class": OutputNeuron.__name__
+        }
+        output_layer = [copy.deepcopy(output_neuron) for _ in range(3)]
+        for index, neuron in enumerate(output_layer):
+            neuron["value"] = index - len(output_layer) // 2
+
+        description = [input_layer, output_layer]
+        brain = cls.load(description)
+        return brain
 
     def dump(self) -> list[list[dict]]:
         return [[neuron.dump() for neuron in layer] for layer in self.layers]

@@ -26,7 +26,9 @@ class Arena:
         return brain
 
     def load_snake(self) -> None:
-        brain = self.load_brain()
+        # todo: return line
+        # brain = self.load_brain()
+        brain = Brain.get_default()
         self.snake = Snake(brain, self.world_map)
 
     def perform(self) -> None:
