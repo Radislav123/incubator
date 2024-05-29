@@ -1,6 +1,6 @@
 from arcade.gui import UIOnClickEvent
 
-from core.ui.button import TextureButton
+from core.ui.button.texture_button import TextureButton
 from core.view.simulation import SimulationView as CoreSimulationView
 from simple_clicker.settings import Settings
 

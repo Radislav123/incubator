@@ -1,7 +1,7 @@
 from arcade.gui import UIBoxLayout, UIOnClickEvent
 
 from clicker.view.simulation import SimulationView as ClickerSimulationView
-from core.ui.button import TextureButton
+from core.ui.button.texture_button import TextureButton
 from core.view.menu import MenuView
 from core.view.simulation import SimulationView
 from gravity.view.simulation import SimulationView as GravitySimulationView

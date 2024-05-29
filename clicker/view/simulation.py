@@ -6,7 +6,7 @@ from clicker.component.automation.ui import AutoClickButton, AutoUpgradeButton, 
 from clicker.component.increment import AutoIncrementButton, IncrementButton
 from clicker.component.info import InfoBox, InfoButton
 from clicker.settings import Settings
-from core.ui.text import Label
+from core.ui.text.label import Label
 from core.view.simulation import SimulationView as CoreSimulationView
 
 

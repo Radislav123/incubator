@@ -8,8 +8,8 @@ from clicker.settings import Settings
 from core.service.anchor import Anchor
 from core.service.color import Color
 from core.texture import Texture
-from core.ui.button import TextureButton
-from core.ui.layout import BoxLayout
+from core.ui.button.texture_button import TextureButton
+from core.ui.layout.box_layout import BoxLayout
 
 
 if TYPE_CHECKING:

@@ -1,6 +1,6 @@
 from core.service.color import Color
 from core.texture import Texture
-from core.ui.button import TextureButton
+from core.ui.button.texture_button import TextureButton
 
 
 class Label(TextureButton):

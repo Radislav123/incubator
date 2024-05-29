@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 from arcade.gui import UIOnClickEvent
 
-from core.ui.button import TextureButton
+from core.ui.button.texture_button import TextureButton
 
 
 if TYPE_CHECKING:

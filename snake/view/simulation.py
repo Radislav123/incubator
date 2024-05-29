@@ -1,13 +1,14 @@
 import copy
 
 from core.service.anchor import Anchor
-from core.ui.layout import BoxLayout
+from core.ui.layout.box_layout import BoxLayout
 from core.view.simulation import SimulationView as CoreSimulationView
 from snake.component.arena import Arena
 from snake.component.world import World
 from snake.service.color import Color
 from snake.settings import Settings
-from snake.ui import BrainMap, ExitButton, PauseButton, RestartButton, SpeedButton
+from snake.ui.brain_map import BrainMap
+from snake.ui.control import ExitButton, PauseButton, RestartButton, SpeedButton
 
 
 class SimulationView(CoreSimulationView):
@@ -24,7 +25,7 @@ class SimulationView(CoreSimulationView):
     arena: Arena = None
     snake_perform_timer: float
     snake_released: bool
-    brain_path = settings.CLEAN_BRAIN_PATH
+    brain_path = None
     brain_map: BrainMap
 
     def create_arena(self) -> Arena:

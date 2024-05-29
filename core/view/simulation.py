@@ -1,7 +1,7 @@
 from arcade.gui import UIOnClickEvent
 
 from core.service.anchor import Anchor
-from core.ui.button import TextureButton
+from core.ui.button.texture_button import TextureButton
 from core.view.base import BaseView
 
 

@@ -8,28 +8,26 @@ from snake.component.world import Map
 class Arena:
     snake: Snake
 
-    def __init__(self, brain_path: str, world_map: Map) -> None:
+    def __init__(self, brain_path: str | None, world_map: Map) -> None:
         self.brain_path = brain_path
         self.world_map = world_map
         self.load_snake()
         self.world_map.place_food()
 
-    def dump_brain(self) -> None:
-        with open(self.brain_path, 'w') as file:
-            data = self.snake.brain.dump()
-            json.dump(data, file, indent = 4)
+    def dump_brain(self, path: str) -> None:
+        with open(path, 'w') as file:
+            json.dump(self.snake.brain.dump(), file, indent = 4)
 
     def load_brain(self) -> Brain:
-        with open(self.brain_path, 'r') as file:
-            data = json.load(file)
-            brain = Brain.load(data)
+        if self.brain_path is None:
+            brain = Brain.get_default()
+        else:
+            with open(self.brain_path, 'r') as file:
+                brain = Brain.load(json.load(file))
         return brain
 
     def load_snake(self) -> None:
-        # todo: return line
-        # brain = self.load_brain()
-        brain = Brain.get_default()
-        self.snake = Snake(brain, self.world_map)
+        self.snake = Snake(self.load_brain(), self.world_map)
 
     def perform(self) -> None:
         self.snake.perform()

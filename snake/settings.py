@@ -9,4 +9,3 @@ class Settings(CoreSettings):
         super().__init__()
 
         self.BRAINS_PATH = f"{self.APP_NAME}/brain"
-        self.CLEAN_BRAIN_PATH = f"{self.BRAINS_PATH}/clean.json"
