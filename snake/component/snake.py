@@ -36,7 +36,7 @@ class Snake:
 
         self.age = 0
         self.starvation = 0
-        self.max_starvation = 100
+        self.max_starvation = 1000
         self.alive = True
         self.direction = 0
 
@@ -52,12 +52,41 @@ class Snake:
             x, y = segment.move_to(x, y)
 
     def choose_direction(self) -> None:
-        # todo: change inputs
-        self.brain.process([0 for _ in range(9)])
+        all_directions_amount = len(self.world_map.offsets)
+        directions_amount = 3
+        start_direction_offset = -(directions_amount // 2)
+        available_directions = [(self.direction + x + all_directions_amount) % all_directions_amount
+                                for x in range(start_direction_offset, directions_amount + start_direction_offset, 1)]
 
-        directions_amount = len(self.world_map.offsets)
-        direction_change = self.brain.output + directions_amount
-        self.direction = (self.direction + direction_change) % directions_amount
+        borders = []
+        segments = []
+        food = []
+        sensors = (
+            (borders, self.world_map.borders),
+            (segments, self.world_map.snake),
+            (food, self.world_map.food)
+        )
+        for direction in available_directions:
+            offset = self.world_map.offsets[direction]
+            for sensor, sensor_map in sensors:
+                distance = 1
+                x = self.head.x + offset[0]
+                y = self.head.y + offset[1]
+                while 0 <= x < self.world_map.square_side_length and 0 <= y < self.world_map.square_side_length:
+                    if sensor_map[x][y]:
+                        sensor_value = 1 / distance
+                        break
+                    distance += 1
+                    x += offset[0]
+                    y += offset[1]
+                else:
+                    sensor_value = 0
+                sensor.append(sensor_value)
+        inputs = [*borders, *segments, *food]
+        self.brain.process(inputs)
+
+        direction_change = self.brain.output + all_directions_amount
+        self.direction = (self.direction + direction_change) % all_directions_amount
 
     def eat(self) -> None:
         if self.world_map.food[self.head.x][self.head.y]:
