@@ -97,7 +97,6 @@ class SimulationView(CoreSimulationView):
         self.reference_brain = Brain.get_default()
         self.prepare_training_arenas()
         self.snake_training = True
-        self.show_training = True
 
         # todo: remove 3 lines
         # self.released_arena = self.create_arena()
@@ -134,10 +133,15 @@ class SimulationView(CoreSimulationView):
                 finish = time.time()
                 latency += finish - start
 
-            if generation_trained and self.current_generation < self.max_generation:
-                self.prepare_training_arenas()
-                scores = {arena.snake.get_score(): arena.snake.brain for arena in self.training_arenas}
-                self.reference_brain = scores[max(scores)]
+            if generation_trained:
+                scores = {arena.snake.get_score(): arena for arena in self.training_arenas}
+                arena = scores[max(scores)]
+                self.reference_brain = arena.snake.brain
+                if self.current_generation < self.max_generation:
+                    self.prepare_training_arenas()
+                else:
+                    # todo: сделать путь уникальным
+                    arena.dump_brain(f"{self.settings.BRAINS_PATH}/temp.json")
 
     def train(self, cycles: int) -> bool:
         for _ in range(cycles):
