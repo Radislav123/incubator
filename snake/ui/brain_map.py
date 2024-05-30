@@ -45,7 +45,9 @@ class NeuronMap(SnakeStyleButtonMixin, TextureButton):
         return self.default_textures[nearest_key]
 
     def update_texture(self) -> None:
-        self.texture = self.get_texture()
+        texture = self.get_texture()
+        if self.texture != texture:
+            self.texture = texture
 
 
 class LayerLabel(SnakeStyleButtonMixin, Label):

@@ -61,9 +61,10 @@ class Back(ActionButton):
         self.view.reference_brain = None
         self.view.prepare_load_tab()
 
+
 class ActionTabSlider(SnakeStyleSliderMixin, StepSlider):
     def __init__(self, action_tab: "ActionTab") -> None:
-        super().__init__(step = 10, value = 10, width = ActionButton.default_width)
+        super().__init__(step = 10, value = 10, max_value = 200, width = ActionButton.default_width)
         self.action_tab = action_tab
         self.view = self.action_tab.view
 

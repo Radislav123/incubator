@@ -32,6 +32,8 @@ class Neuron:
         value = sum(inputs[x] * self.input_weights[x] for x in range(self.inputs_amount))
         if value > 1:
             self.output = 1
+        elif 0 < value < 1:
+            self.output = value
         else:
             self.output = 0
 
