@@ -77,6 +77,7 @@ class Brain:
         self.output: float = 0
         self.generation = generation
         self.name = name
+        self.loading_dict: BrainDescription | None = None
 
     def __hash__(self) -> int:
         return hash(sum(hash(y) for x in self.layers for y in x))
@@ -126,6 +127,7 @@ class Brain:
         else:
             name = None
         brain = cls(generation, name)
+        brain.loading_dict = data
 
         for layer_description in data["layers"]:
             layer = []

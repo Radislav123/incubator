@@ -41,6 +41,8 @@ class Tile(Sprite):
         self.world = world
         self.enabled = False
         super().__init__(self.get_texture(), center_x = center[0], center_y = center[1])
+        self.width = self.default_width
+        self.height = self.default_height
 
         self.border_points = (
             (self.center_x - self.width / 2, self.center_y - self.height / 4),
@@ -60,15 +62,13 @@ class Tile(Sprite):
         self.color = self.colors[self.enabled]
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}{int(self.center_x), int(self.center_y)}"
+        return f"{self.__class__.__name__}{int(self.center_x), int(self.center_y)}{self.map_x, self.map_y}"
 
     @classmethod
     def get_texture(cls) -> Texture:
         if cls._texture is None:
             image = PIL.Image.open(cls.image_path)
-            cls._texture = Texture(image)
-            cls._texture.width = cls.default_width
-            cls._texture.height = cls.default_height
+            cls._texture = Texture(image, hit_box_algorithm = arcade.hitbox.algo_detailed)
         return cls._texture
 
     def register(self) -> None:
@@ -138,8 +138,6 @@ class World:
         self.all_tiles = SpriteList[Tile](True)
         self.tile_borders = arcade.shape_list.ShapeElementList()
         self.create()
-        for tile in self.surface_tiles:
-            self.tile_borders.append(tile.border)
 
         self.reference_map = Map(self)
 

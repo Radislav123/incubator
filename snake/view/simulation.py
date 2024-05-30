@@ -113,6 +113,10 @@ class SimulationView(CoreSimulationView):
         self.prepare_load_tab()
         self.snake_training = False
 
+    def on_hide_view(self) -> None:
+        super().on_hide_view()
+        self.snake_released = False
+
     def on_draw(self) -> None:
         self.speed_button.update_text()
         super().on_draw()
@@ -156,7 +160,11 @@ class SimulationView(CoreSimulationView):
                     folder = Path(self.settings.BRAINS_PATH)
                     if not folder.exists():
                         folder.mkdir(parents = True)
-                    arena.snake.brain.dump_to_file(f"{folder}/{arena.snake.brain.save_name}", score = max_score)
+                    extra_data = {
+                        "score": max_score,
+                        "generation_size": self.generation_size
+                    }
+                    arena.snake.brain.dump_to_file(f"{folder}/{arena.snake.brain.save_name}", **extra_data)
                     self.snake_training = False
                     self.max_generation = None
                     self.prepare_load_tab()

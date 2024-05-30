@@ -43,11 +43,11 @@ class Map:
                 for _ in range(edge_size):
                     x += offset_x
                     y += offset_y
+                    tile = world.all_tiles[index]
                     self.surface[x][y] = tile.is_surface
                     self.borders[x][y] = tile.is_border
                     self.snake[x][y] = False
                     self.food[x][y] = False
-                    tile = world.all_tiles[index]
                     tile.map_x = x
                     tile.map_y = y
                     index += 1
