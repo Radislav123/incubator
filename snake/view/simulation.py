@@ -7,11 +7,13 @@ from core.ui.layout.box_layout import BoxLayout
 from core.view.simulation import SimulationView as CoreSimulationView
 from snake.component.arena import Arena
 from snake.component.brain import Brain
+from snake.component.snake import Snake
 from snake.component.world import World
 from snake.service.color import Color
 from snake.settings import Settings
 from snake.ui.brain_map import BrainMap
 from snake.ui.control import ExitButton, PauseButton, RestartButton, SpeedButton
+from snake.ui.load_tab import LoadTab
 
 
 class SimulationView(CoreSimulationView):
@@ -21,18 +23,20 @@ class SimulationView(CoreSimulationView):
     background_color = Color.BACKGROUND
 
     exit_button_class = ExitButton
-    speed_button: SpeedButton
-    pause_button: PauseButton
-    restart_button: RestartButton
+    speed_button: SpeedButton = None
+    pause_button: PauseButton = None
+    restart_button: RestartButton = None
 
-    world: World
+    load_tab: LoadTab = None
+
+    world: World = None
     snake_perform_timer: float
     released_arena: Arena = None
     snake_released: bool = False
     brain_map: BrainMap = None
 
     brain: Brain | str | None = None
-    reference_brain: Brain
+    reference_brain: Brain = None
     snake_training: bool = False
     max_generation: int = 10
     generation_size: int = 10
@@ -43,13 +47,16 @@ class SimulationView(CoreSimulationView):
     def prepare_buttons(self) -> None:
         layout = BoxLayout()
 
-        self.speed_button = SpeedButton(self)
+        if self.speed_button is None:
+            self.speed_button = SpeedButton(self)
         layout.add(self.speed_button)
 
-        self.pause_button = PauseButton(self)
+        if self.pause_button is None:
+            self.pause_button = PauseButton(self)
         layout.add(self.pause_button)
 
-        self.restart_button = RestartButton(self)
+        if self.restart_button is None:
+            self.restart_button = RestartButton(self)
         layout.add(self.restart_button)
 
         layout.fit_content()
@@ -57,8 +64,10 @@ class SimulationView(CoreSimulationView):
         self.ui_manager.add(layout)
 
     def prepare_world(self) -> None:
-        self.world = World(self)
+        if self.world is None:
+            self.world = World(self)
 
+    # todo: rewrite and rename method?
     def create_arena(self) -> Arena:
         world_map = copy.deepcopy(self.world.reference_map)
         arena = Arena(self.brain, world_map)
@@ -75,24 +84,37 @@ class SimulationView(CoreSimulationView):
 
     def prepare_training_arenas(self) -> None:
         self.reference_brain.generation += 1
-        self.training_arenas = [Arena(self.reference_brain.mutate(), copy.deepcopy(self.world.reference_map))
+        self.training_arenas = [Arena(Snake(self.reference_brain.mutate(), copy.deepcopy(self.world.reference_map)))
                                 for _ in range(self.generation_size - 1)]
-        self.training_arenas.append(Arena(self.reference_brain, copy.deepcopy(self.world.reference_map)))
+        self.training_arenas = []
+        self.training_arenas.append(Arena(Snake(self.reference_brain, copy.deepcopy(self.world.reference_map))))
         self.training_arena_index = 0
 
         if self.show_training:
             self.released_arena = self.training_arenas[self.training_arena_index]
             self.prepare_brain_map()
 
+    def prepare_load_tab(self) -> None:
+        if self.load_tab is None:
+            self.load_tab = LoadTab(self)
+
+        self.load_tab.update_loads()
+        self.ui_manager.add(self.load_tab)
+
+    def prepare_actions_tab(self) -> None:
+        # todo: write it
+        pass
+
     def on_show_view(self) -> None:
         super().on_show_view()
         self.prepare_buttons()
         self.prepare_world()
+        self.prepare_load_tab()
 
         # todo: rewrite this lines
-        self.reference_brain = Brain.get_default()
-        self.prepare_training_arenas()
-        self.snake_training = True
+        # self.reference_brain = Brain.get_default()
+        # self.prepare_training_arenas()
+        # self.snake_training = True
 
         # todo: remove 3 lines
         # self.released_arena = self.create_arena()

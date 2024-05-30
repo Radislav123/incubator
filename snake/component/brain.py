@@ -1,5 +1,6 @@
 import copy
 import inspect
+import json
 import random
 import sys
 from typing import Self
@@ -112,6 +113,10 @@ class Brain:
             data["name"] = self.name
         return data
 
+    def dump_to_file(self, path: str) -> None:
+        with open(path, 'w') as file:
+            json.dump(self.dump(), file, indent = 4)
+
     @classmethod
     def load(cls, data: dict) -> Self:
         generation = data["generation"]
@@ -128,6 +133,12 @@ class Brain:
                 neuron_class = getattr(sys.modules[__name__], neuron_description.pop("class"))
                 neuron = neuron_class(**neuron_description)
                 layer.append(neuron)
+        return brain
+
+    @classmethod
+    def load_from_file(cls, path: str) -> Self:
+        with open(path, 'r') as file:
+            brain = cls.load(json.load(file))
         return brain
 
     def process(self, inputs: list[float]) -> None:
@@ -153,4 +164,4 @@ class Brain:
             name = self.name
         else:
             name = hash(self)
-        return f"{name}_{self.generation}.json"
+        return f"{name}_{self.generation}.brain"
