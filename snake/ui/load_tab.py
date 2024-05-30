@@ -168,9 +168,12 @@ class LoadTab(BoxLayout):
     def update_loads(self) -> None:
         if Path(self.settings.BRAINS_PATH).exists():
             new_paths = set(glob.glob(f"{self.settings.BRAINS_PATH}/*.{Brain.file_extension}"))
-            latest_path = max(new_paths, key = os.path.getctime)
         else:
             new_paths = set()
+
+        if len(new_paths) > 0:
+            latest_path = max(new_paths, key = os.path.getctime)
+        else:
             latest_path = None
         new_paths.add(None)
 

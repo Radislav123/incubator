@@ -52,6 +52,15 @@ class Train(ActionButton):
         self.view.snake_training = True
 
 
+class Back(ActionButton):
+    def __init__(self, action_tab: "ActionTab", **kwargs) -> None:
+        super().__init__(action_tab, text = "Назад", **kwargs)
+
+    def on_click(self, event: UIOnClickEvent) -> None:
+        self.view.ui_manager.remove(self.action_tab)
+        self.view.reference_brain = None
+        self.view.prepare_load_tab()
+
 class ActionTabSlider(SnakeStyleSliderMixin, StepSlider):
     def __init__(self, action_tab: "ActionTab") -> None:
         super().__init__(step = 10, value = 10, width = ActionButton.default_width)
@@ -109,6 +118,7 @@ class ActionTab(BoxLayout):
         self.generation_size = GenerationSize(self)
         self.generation_size_label = GenerationSizeLabel(self)
         children = [
+            Back(self),
             Release(self),
             Train(self),
             self.generations_amount_label,
