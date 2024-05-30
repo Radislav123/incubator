@@ -55,9 +55,9 @@ class Load(SnakeStyleButtonMixin, TextureButton):
         else:
             self.brain = Brain.load_from_file(self.path)
             text = [
-                self.path.split('\\')[-1].split('.')[0],
                 self.brain.loading_dict["generation"],
-                self.brain.loading_dict["score"]
+                self.brain.loading_dict["score"],
+                self.path.split('\\')[-1].split('.')[0]
             ]
             text = " ".join(str(x) for x in text)
 
@@ -65,7 +65,15 @@ class Load(SnakeStyleButtonMixin, TextureButton):
 
     def __gt__(self, other: "Load") -> bool:
         if self.path is not None and other.path is not None:
-            greater = self.path < other.path
+            params = ["score", "generation"]
+            for param in params:
+                self_param = self.brain.loading_dict[param]
+                other_param = other.brain.loading_dict[param]
+                if self_param != other_param:
+                    greater = self_param < other_param
+                    break
+            else:
+                greater = self.path < other.path
         elif self.path is None:
             greater = True
         else:
