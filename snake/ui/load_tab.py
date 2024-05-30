@@ -1,9 +1,10 @@
 import copy
+import glob
 import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from arcade.gui import UIOnClickEvent
+from arcade.gui import UIOnClickEvent, UITextureButton
 
 from core.service.anchor import Anchor
 from core.texture import Texture
@@ -21,8 +22,27 @@ if TYPE_CHECKING:
 
 
 class Load(SnakeStyleButtonMixin, TextureButton):
+    settings = Settings()
+
     default_width = 400
     default_height = 50
+
+    latest_normal_style = UITextureButton.UIStyle(
+        font_size = 14,
+        font_name = settings.FONTS,
+        font_color = Color.LATEST_PATH_TEXT
+    )
+    latest_hovered_style = UITextureButton.UIStyle(
+        font_size = 16,
+        font_name = settings.FONTS,
+        font_color = Color.LATEST_PATH_TEXT
+    )
+    LATEST_DEFAULT_STYLE = {
+        "normal": latest_normal_style,
+        "hover": latest_hovered_style,
+        "press": latest_hovered_style,
+        "disabled": latest_normal_style
+    }
 
     def __init__(self, load_tab: "LoadTab", path: str | None, **kwargs) -> None:
         self.load_tab = load_tab
@@ -31,11 +51,11 @@ class Load(SnakeStyleButtonMixin, TextureButton):
 
         if self.path is None:
             self.brain = Brain.get_default()
-            text = "clean"
+            text = "Новый"
         else:
-            self.brain = Brain.load_from_file(f"{self.settings.BRAINS_PATH}/{self.path}")
+            self.brain = Brain.load_from_file(self.path)
             text = [
-                self.path.split('.')[0],
+                self.path.split('\\')[-1].split('.')[0],
                 self.brain.loading_dict["generation"],
                 self.brain.loading_dict["score"]
             ]
@@ -57,6 +77,14 @@ class Load(SnakeStyleButtonMixin, TextureButton):
         self.view.reference_brain = copy.deepcopy(self.brain)
         self.view.prepare_actions_tab()
 
+    def update_style(self, latest: bool) -> None:
+        if latest:
+            style = self.LATEST_DEFAULT_STYLE
+        else:
+            style = self.DEFAULT_STYLE
+        if self.style != style:
+            self.style = style
+
 
 class Label(SnakeStyleButtonMixin, CoreLabel):
     def __init__(self) -> None:
@@ -77,9 +105,11 @@ class LoadTab(BoxLayout):
 
     def update_loads(self) -> None:
         if Path(self.settings.BRAINS_PATH).exists():
-            new_paths = set(os.listdir(self.settings.BRAINS_PATH))
+            new_paths = set(glob.glob(f"{self.settings.BRAINS_PATH}/*.{Brain.file_extension}"))
+            latest_path = max(new_paths, key = os.path.getctime)
         else:
             new_paths = set()
+            latest_path = None
         new_paths.add(None)
         old_loads = self.loads.copy()
 
@@ -97,6 +127,7 @@ class LoadTab(BoxLayout):
         self.add(self.label)
         for load in self.loads.values():
             self.add(load)
+            load.update_style(load.path == latest_path)
 
         if len(old_loads) != len(self.children):
             self.fit_content()

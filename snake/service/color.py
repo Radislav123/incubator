@@ -31,3 +31,4 @@ class Color(CoreColor):
     TILE_BORDER = (255, 255, 255, 255)
 
     TEXT = (50, 240, 50, 255)
+    LATEST_PATH_TEXT = (240, 30, 30, 255)

@@ -72,6 +72,8 @@ class OutputNeuron(Neuron):
 
 
 class Brain:
+    file_extension = "brain"
+
     def __init__(self, generation: int, name: str | None = None) -> None:
         self.layers: list[list[Neuron | OutputNeuron]] = []
         self.output: float = 0
@@ -167,4 +169,4 @@ class Brain:
             name = self.name
         else:
             name = hash(self)
-        return f"{name}.brain"
+        return f"{name}.{self.file_extension}"

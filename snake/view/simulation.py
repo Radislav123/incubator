@@ -152,9 +152,9 @@ class SimulationView(CoreSimulationView):
                 max_score = max(scores)
                 arena = scores[max_score]
                 self.reference_brain = arena.snake.brain
+                self.reference_brain.generation += 1
                 if self.reference_brain.generation < self.max_generation:
                     self.reference_brain = copy.deepcopy(self.reference_brain)
-                    self.reference_brain.generation += 1
                     self.prepare_training_arenas()
                 else:
                     folder = Path(self.settings.BRAINS_PATH)

@@ -25,7 +25,7 @@ class Action(SnakeStyleButtonMixin, TextureButton):
 
 class Release(Action):
     def __init__(self, action_tab: "ActionTab", **kwargs) -> None:
-        super().__init__(action_tab, text = "release", **kwargs)
+        super().__init__(action_tab, text = "Выпустить", **kwargs)
 
     def on_click(self, event: UIOnClickEvent) -> None:
         super().on_click(event)
@@ -36,7 +36,7 @@ class Release(Action):
 
 class Train(Action):
     def __init__(self, action_tab: "ActionTab", **kwargs) -> None:
-        super().__init__(action_tab, text = "train", **kwargs)
+        super().__init__(action_tab, text = "Тренировать", **kwargs)
 
     def on_click(self, event: UIOnClickEvent) -> None:
         self.view.ui_manager.remove(self.action_tab)
