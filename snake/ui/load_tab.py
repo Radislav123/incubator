@@ -1,10 +1,12 @@
 import copy
 import glob
+import math
 import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from arcade.gui import UIOnClickEvent, UITextureButton
+from arcade.gui import UIEvent, UIMouseScrollEvent, UIOnClickEvent, UITextureButton
+from pyglet.event import EVENT_HANDLED, EVENT_UNHANDLED
 
 from core.service.anchor import Anchor
 from core.texture import Texture
@@ -48,20 +50,18 @@ class Load(SnakeStyleButtonMixin, TextureButton):
         self.load_tab = load_tab
         self.view = self.load_tab.view
         self.path = path
+        self.index: int | None = None
 
         if self.path is None:
             self.brain = Brain.get_default()
-            text = "Новый"
+            self.score = 0
         else:
             self.brain = Brain.load_from_file(self.path)
-            text = [
-                self.brain.loading_dict["generation"],
-                self.brain.loading_dict["score"],
-                self.path.split('\\')[-1].split('.')[0]
-            ]
-            text = " ".join(str(x) for x in text)
+            self.score = self.brain.loading_dict["score"]
 
-        super().__init__(text = text, width = self.default_width, height = self.default_height, **kwargs)
+        super().__init__(width = self.default_width, height = self.default_height, **kwargs)
+
+        self.place_text(anchor_x = Anchor.X.LEFT, align_x = 10)
 
     def __gt__(self, other: "Load") -> bool:
         if self.path is not None and other.path is not None:
@@ -80,6 +80,39 @@ class Load(SnakeStyleButtonMixin, TextureButton):
             greater = False
         return greater
 
+    def update_text(self) -> None:
+        spaces_to_char = 2
+
+        max_index_len = int(math.log10(len(self.load_tab.loads))) + 3
+        index_str = f"({self.index})"
+        index_str_length = (max_index_len - len(index_str)) * spaces_to_char + len(index_str)
+        index_str = index_str.rjust(index_str_length)
+        text = [index_str]
+
+        if self.path is None:
+            text.append("Новый")
+        else:
+            max_generation_len = int(math.log10(max(x.brain.generation for x in self.load_tab.loads.values()))) + 1
+            generation_str = str(self.brain.generation)
+            generation_str_len = (max_generation_len - len(generation_str)) * spaces_to_char + len(generation_str)
+            generation_str = generation_str.ljust(generation_str_len)
+
+            max_score_len = int(math.log10(max(x.score for x in self.load_tab.loads.values()))) + 1
+            score_str = str(self.score)
+            score_str_len = (max_score_len - len(score_str)) * spaces_to_char + len(score_str)
+            score_str = score_str.ljust(score_str_len)
+
+            extend = [
+                generation_str,
+                score_str,
+                self.path.split('\\')[-1].split('.')[0]
+            ]
+            text.extend(extend)
+        text = " | ".join(text)
+
+        if self.text != text:
+            self.text = text
+
     def on_click(self, event: UIOnClickEvent) -> None:
         self.view.ui_manager.remove(self.load_tab)
         self.view.reference_brain = copy.deepcopy(self.brain)
@@ -96,7 +129,7 @@ class Load(SnakeStyleButtonMixin, TextureButton):
 
 class Label(SnakeStyleButtonMixin, CoreLabel):
     def __init__(self) -> None:
-        text = "Название Поколение Счет"
+        text = "(Индекс) | Название | Поколение | Счет"
         texture = Texture.create_empty("load tab label", (Load.default_width, Load.default_height))
         super().__init__(text = text, texture = texture, width = Load.default_width, height = Load.default_height)
 
@@ -105,11 +138,29 @@ class LoadTab(BoxLayout):
     settings = Settings()
 
     def __init__(self, view: "SimulationView", **kwargs) -> None:
-        super().__init__(**kwargs)
         self.view = view
-        self.with_padding(all = self.gap)
         self.loads: dict[str | None, Load] = {}
+        self.max_loads_amount = (self.view.window.height - self.gap) // Load.default_height - 1
         self.label = Label()
+        self.load_pane = BoxLayout()
+        self.scroll_offset = 0
+        super().__init__(
+            width = Load.default_width,
+            height = (self.max_loads_amount + 1) * Load.default_height,
+            children = [self.label, self.load_pane],
+            **kwargs
+        )
+
+        self.with_padding(all = self.gap)
+        self.with_background(
+            texture = Texture.create_rounded_rectangle(
+                self.size,
+                4,
+                color = Color.NORMAL,
+                border_color = Color.BORDER
+            )
+        )
+        self.move_to(0, self.view.window.height, Anchor.X.LEFT, Anchor.Y.TOP)
 
     def update_loads(self) -> None:
         if Path(self.settings.BRAINS_PATH).exists():
@@ -119,10 +170,9 @@ class LoadTab(BoxLayout):
             new_paths = set()
             latest_path = None
         new_paths.add(None)
-        old_loads = self.loads.copy()
 
-        for child in self.children:
-            self.remove(child)
+        self.load_pane.clear()
+        for child in self.load_pane.children:
             if isinstance(child, Load) and child.path not in new_paths:
                 del self.loads[child.path]
 
@@ -132,19 +182,31 @@ class LoadTab(BoxLayout):
                 self.loads[path] = load
 
         self.loads = {key: value for key, value in sorted(self.loads.items(), key = lambda x: x[1], reverse = True)}
-        self.add(self.label)
-        for load in self.loads.values():
-            self.add(load)
+        for index, load in enumerate(self.loads.values()):
+            load.index = index
+            load.update_text()
+        for load in self.get_visible_loads():
+            self.load_pane.add(load)
             load.update_style(load.path == latest_path)
 
-        if len(old_loads) != len(self.children):
-            self.fit_content()
-            self.with_background(
-                texture = Texture.create_rounded_rectangle(
-                    self.size,
-                    4,
-                    color = Color.NORMAL,
-                    border_color = Color.BORDER
+    def on_event(self, event: UIEvent) -> bool | None:
+        if isinstance(event, UIMouseScrollEvent):
+            if self.rect.collide_with_point(event.x, event.y):
+                self.scroll_offset -= int(event.scroll_y)
+                self.scroll_offset = max(0, self.scroll_offset)
+                self.scroll_offset = min(
+                    self.scroll_offset,
+                    len(self.loads) - self.load_pane.height // Load.default_height
                 )
-            )
-            self.move_to(0, self.view.window.height, Anchor.X.LEFT, Anchor.Y.TOP)
+                self.load_pane.clear()
+                for load in self.get_visible_loads():
+                    self.load_pane.add(load)
+
+        if super().on_event(event):
+            handled = EVENT_HANDLED
+        else:
+            handled = EVENT_UNHANDLED
+        return handled
+
+    def get_visible_loads(self) -> list[Load]:
+        return list(self.loads.values())[self.scroll_offset:self.scroll_offset + self.max_loads_amount]
