@@ -3,10 +3,14 @@ from core.service.color import Color as CoreColor
 
 class Color(CoreColor):
     BACKGROUND = (0, 0, 0, 255)
+
     NORMAL = (30, 30, 30, 255)
     HOVERED = (40, 40, 40, 255)
     PRESSED = (20, 20, 20, 255)
     DISABLED = (50, 50, 50, 255)
+
+    SLIDER_NORMAL = (80, 80, 80, 255)
+    SLIDER_HOVERED = (100, 100, 100, 255)
 
     SNAKE_ALIVE = (50, 200, 50, 255)
     SNAKE_DEAD = (50, 100, 40, 255)

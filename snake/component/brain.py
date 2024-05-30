@@ -104,18 +104,19 @@ class Brain:
         brain = cls.load(description)
         return brain
 
-    def dump(self) -> BrainDescription:
+    def dump(self, **kwargs) -> BrainDescription:
         data = {
             "layers": [[neuron.dump() for neuron in layer] for layer in self.layers],
             "generation": self.generation
         }
         if self.name is not None:
             data["name"] = self.name
+        data.update(kwargs)
         return data
 
-    def dump_to_file(self, path: str) -> None:
+    def dump_to_file(self, path: str, **kwargs) -> None:
         with open(path, 'w') as file:
-            json.dump(self.dump(), file, indent = 4)
+            json.dump(self.dump(**kwargs), file, indent = 4)
 
     @classmethod
     def load(cls, data: dict) -> Self:
@@ -164,4 +165,4 @@ class Brain:
             name = self.name
         else:
             name = hash(self)
-        return f"{name}_{self.generation}.brain"
+        return f"{name}.brain"

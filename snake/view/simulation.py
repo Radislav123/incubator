@@ -11,6 +11,7 @@ from snake.component.snake import Snake
 from snake.component.world import World
 from snake.service.color import Color
 from snake.settings import Settings
+from snake.ui.action_tab import ActionTab
 from snake.ui.brain_map import BrainMap
 from snake.ui.control import ExitButton, PauseButton, RestartButton, SpeedButton
 from snake.ui.load_tab import LoadTab
@@ -28,6 +29,7 @@ class SimulationView(CoreSimulationView):
     restart_button: RestartButton = None
 
     load_tab: LoadTab = None
+    action_tab: ActionTab = None
 
     world: World = None
     snake_perform_timer: float
@@ -35,11 +37,10 @@ class SimulationView(CoreSimulationView):
     snake_released: bool = False
     brain_map: BrainMap = None
 
-    brain: Brain | str | None = None
     reference_brain: Brain = None
-    snake_training: bool = False
-    max_generation: int = 10
-    generation_size: int = 10
+    snake_training: bool
+    max_generation: int | None = None
+    generation_size: int | None = None
     training_arena_index: int
     training_arenas: list[Arena] = None
     show_training = False
@@ -67,10 +68,10 @@ class SimulationView(CoreSimulationView):
         if self.world is None:
             self.world = World(self)
 
-    # todo: rewrite and rename method?
-    def create_arena(self) -> Arena:
+    def prepare_released_arena(self) -> Arena:
         world_map = copy.deepcopy(self.world.reference_map)
-        arena = Arena(self.brain, world_map)
+        snake = Snake(self.reference_brain, world_map)
+        arena = Arena(snake)
         self.snake_perform_timer = 0
         return arena
 
@@ -83,10 +84,8 @@ class SimulationView(CoreSimulationView):
         self.ui_manager.add(self.brain_map)
 
     def prepare_training_arenas(self) -> None:
-        self.reference_brain.generation += 1
         self.training_arenas = [Arena(Snake(self.reference_brain.mutate(), copy.deepcopy(self.world.reference_map)))
                                 for _ in range(self.generation_size - 1)]
-        self.training_arenas = []
         self.training_arenas.append(Arena(Snake(self.reference_brain, copy.deepcopy(self.world.reference_map))))
         self.training_arena_index = 0
 
@@ -102,24 +101,17 @@ class SimulationView(CoreSimulationView):
         self.ui_manager.add(self.load_tab)
 
     def prepare_actions_tab(self) -> None:
-        # todo: write it
-        pass
+        if self.action_tab is None:
+            self.action_tab = ActionTab(self)
+
+        self.ui_manager.add(self.action_tab)
 
     def on_show_view(self) -> None:
         super().on_show_view()
         self.prepare_buttons()
         self.prepare_world()
         self.prepare_load_tab()
-
-        # todo: rewrite this lines
-        # self.reference_brain = Brain.get_default()
-        # self.prepare_training_arenas()
-        # self.snake_training = True
-
-        # todo: remove 3 lines
-        # self.released_arena = self.create_arena()
-        # self.prepare_brain_map()
-        # self.snake_released = True
+        self.snake_training = False
 
     def on_draw(self) -> None:
         self.speed_button.update_text()
@@ -153,16 +145,21 @@ class SimulationView(CoreSimulationView):
 
             if generation_trained:
                 scores = {arena.snake.get_score(): arena for arena in self.training_arenas}
-                arena = scores[max(scores)]
+                max_score = max(scores)
+                arena = scores[max_score]
                 self.reference_brain = arena.snake.brain
                 if self.reference_brain.generation < self.max_generation:
+                    self.reference_brain = copy.deepcopy(self.reference_brain)
+                    self.reference_brain.generation += 1
                     self.prepare_training_arenas()
                 else:
                     folder = Path(self.settings.BRAINS_PATH)
                     if not folder.exists():
                         folder.mkdir(parents = True)
-                    arena.dump_brain(f"{folder}/{arena.snake.brain.save_name}")
+                    arena.snake.brain.dump_to_file(f"{folder}/{arena.snake.brain.save_name}", score = max_score)
                     self.snake_training = False
+                    self.max_generation = None
+                    self.prepare_load_tab()
 
     def train(self, cycles: int) -> bool:
         for _ in range(cycles):

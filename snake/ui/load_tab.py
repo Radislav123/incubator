@@ -1,3 +1,4 @@
+import copy
 import os
 from typing import TYPE_CHECKING
 
@@ -28,12 +29,23 @@ class Load(SnakeStyleButtonMixin, TextureButton):
             text = "clean"
         super().__init__(text = text, width = 400, height = 50, **kwargs)
 
-    def on_click(self, event: UIOnClickEvent) -> None:
         if self.path is None:
-            self.view.reference_brain = Brain.get_default()
+            self.brain = Brain.get_default()
         else:
-            self.view.reference_brain = Brain.load_from_file(self.path)
+            self.brain = Brain.load_from_file(f"{self.settings.BRAINS_PATH}/{self.path}")
+
+    def __gt__(self, other: "Load") -> bool:
+        if self.path is not None and other.path is not None:
+            greater = self.path < other.path
+        elif self.path is None:
+            greater = True
+        else:
+            greater = False
+        return greater
+
+    def on_click(self, event: UIOnClickEvent) -> None:
         self.view.ui_manager.remove(self.load_tab)
+        self.view.reference_brain = copy.deepcopy(self.brain)
         self.view.prepare_actions_tab()
 
 
@@ -49,20 +61,24 @@ class LoadTab(BoxLayout):
     def update_loads(self) -> None:
         new_paths = set(os.listdir(self.settings.BRAINS_PATH))
         new_paths.add(None)
-        old_amount = len(self.children)
+        old_loads = self.loads.copy()
 
         for child in self.children:
             child: Load
+            self.remove(child)
             if child.path not in new_paths:
-                self.remove(child)
+                del self.loads[child.path]
 
         for path in new_paths:
             if path not in self.loads:
                 load = Load(self, path)
                 self.loads[path] = load
-                self.add(load)
 
-        if old_amount != len(self.children):
+        self.loads = {key: value for key, value in sorted(self.loads.items(), key = lambda x: x[1], reverse = True)}
+        for load in self.loads.values():
+            self.add(load)
+
+        if len(old_loads) != len(self.children):
             self.fit_content()
             self.with_background(
                 texture = Texture.create_rounded_rectangle(

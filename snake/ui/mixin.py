@@ -1,4 +1,4 @@
-from arcade.gui import UITextureButton
+from arcade.gui import UISlider, UITextureButton
 
 from core.texture import Texture
 from snake.service.color import Color
@@ -34,4 +34,17 @@ class SnakeStyleButtonMixin:
         "texture_hovered": DEFAULT_TEXTURES["hover"],
         "texture_pressed": DEFAULT_TEXTURES["press"],
         "texture_disabled": DEFAULT_TEXTURES["disabled"]
+    }
+
+
+class SnakeStyleSliderMixin:
+    settings = Settings()
+
+    normal_style = UISlider.UIStyle(bg = Color.SLIDER_NORMAL, border = Color.BORDER)
+    hovered_style = UISlider.UIStyle(bg = Color.SLIDER_HOVERED, border = Color.BORDER)
+    DEFAULT_STYLE = {
+        "normal": normal_style,
+        "hover": hovered_style,
+        "press": hovered_style,
+        "disabled": normal_style
     }
