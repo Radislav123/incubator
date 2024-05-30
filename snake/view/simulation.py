@@ -19,7 +19,7 @@ from snake.ui.load_tab import LoadTab
 
 class SimulationView(CoreSimulationView):
     settings = Settings()
-    update_rate = 1 / 10**10
+    # update_rate = 1 / 10**10
     max_latency = 1 / 100
     background_color = Color.BACKGROUND
 
