@@ -3,9 +3,12 @@ from typing import TYPE_CHECKING
 from arcade.gui import UIOnChangeEvent, UIOnClickEvent
 
 from core.service.anchor import Anchor
+from core.texture import Texture
 from core.ui.button.texture_button import TextureButton
 from core.ui.layout.box_layout import BoxLayout
 from core.ui.slider.step_slider import StepSlider
+from core.ui.text.label import Label
+from snake.service.color import Color
 from snake.ui.mixin import SnakeStyleButtonMixin, SnakeStyleSliderMixin
 
 
@@ -14,10 +17,13 @@ if TYPE_CHECKING:
 
 
 class Action(SnakeStyleButtonMixin, TextureButton):
+    default_width = 300
+    default_height = 50
+
     def __init__(self, action_tab: "ActionTab", **kwargs) -> None:
         self.action_tab = action_tab
         self.view = self.action_tab.view
-        super().__init__(**kwargs)
+        super().__init__(width = self.default_width, height = self.default_height, **kwargs)
 
     def on_click(self, event: UIOnClickEvent) -> None:
         self.view.ui_manager.remove(self.action_tab)
@@ -48,31 +54,57 @@ class Train(Action):
 
 class GenerationsAmount(SnakeStyleSliderMixin, StepSlider):
     def __init__(self, action_tab: "ActionTab") -> None:
-        super().__init__(step = 10, value = 10)
+        super().__init__(step = 10, value = 10, width = Action.default_width)
         self.action_tab = action_tab
         self.view = self.action_tab.view
 
     def on_change(self, event: UIOnChangeEvent) -> None:
         super().on_change(event)
+        self.action_tab.generations_amount_label.text = str(self.action_tab.generations_amount.value)
+
 
 class GenerationSize(SnakeStyleSliderMixin, StepSlider):
     def __init__(self, action_tab: "ActionTab") -> None:
-        super().__init__(step = 10, value = 10)
+        super().__init__(step = 10, value = 10, width = Action.default_width)
         self.action_tab = action_tab
         self.view = self.action_tab.view
 
     def on_change(self, event: UIOnChangeEvent) -> None:
         super().on_change(event)
+        self.action_tab.generation_size_label.text = str(self.action_tab.generation_size.value)
+
+
+class ActionTabLabel(SnakeStyleButtonMixin, Label):
+    def __init__(self, text: str, **kwargs) -> None:
+        texture = Texture.create_empty("action tab label", (Action.default_width, Action.default_height))
+        super().__init__(text = text, texture = texture, **kwargs)
 
 
 class ActionTab(BoxLayout):
     def __init__(self, view: "SimulationView", **kwargs) -> None:
         self.view = view
         self.generations_amount = GenerationsAmount(self)
+        self.generations_amount_label = ActionTabLabel(text = str(self.generations_amount.value))
         self.generation_size = GenerationSize(self)
-        children = [Release(self), Train(self), self.generations_amount, self.generation_size]
+        self.generation_size_label = ActionTabLabel(text = str(self.generation_size.value))
+        children = [
+            Release(self),
+            Train(self),
+            self.generations_amount_label,
+            self.generations_amount,
+            self.generation_size_label,
+            self.generation_size
+        ]
         super().__init__(children = children, **kwargs)
 
         self.with_padding(all = self.gap)
         self.fit_content()
+        self.with_background(
+            texture = Texture.create_rounded_rectangle(
+                self.size,
+                5,
+                color = Color.NORMAL,
+                border_color = Color.BORDER
+            )
+        )
         self.move_to(0, self.view.window.height, Anchor.X.LEFT, Anchor.Y.TOP)

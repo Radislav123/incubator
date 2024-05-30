@@ -108,7 +108,7 @@ class Load(SnakeStyleButtonMixin, TextureButton):
                 self.path.split('\\')[-1].split('.')[0]
             ]
             text.extend(extend)
-        text = " | ".join(text)
+        text = LoadTabLabel.separator.join(text)
 
         if self.text != text:
             self.text = text
@@ -127,9 +127,12 @@ class Load(SnakeStyleButtonMixin, TextureButton):
             self.style = style
 
 
-class Label(SnakeStyleButtonMixin, CoreLabel):
+class LoadTabLabel(SnakeStyleButtonMixin, CoreLabel):
+    columns = ["(Индекс)", "Название", "Поколение", "Счет"]
+    separator = " | "
+
     def __init__(self) -> None:
-        text = "(Индекс) | Название | Поколение | Счет"
+        text = self.separator.join(self.columns)
         texture = Texture.create_empty("load tab label", (Load.default_width, Load.default_height))
         super().__init__(text = text, texture = texture, width = Load.default_width, height = Load.default_height)
 
@@ -141,7 +144,7 @@ class LoadTab(BoxLayout):
         self.view = view
         self.loads: dict[str | None, Load] = {}
         self.max_loads_amount = (self.view.window.height - self.gap) // Load.default_height - 1
-        self.label = Label()
+        self.label = LoadTabLabel()
         self.load_pane = BoxLayout()
         self.scroll_offset = 0
         super().__init__(
@@ -155,7 +158,7 @@ class LoadTab(BoxLayout):
         self.with_background(
             texture = Texture.create_rounded_rectangle(
                 self.size,
-                4,
+                5,
                 color = Color.NORMAL,
                 border_color = Color.BORDER
             )
