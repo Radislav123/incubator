@@ -1,5 +1,6 @@
 import copy
 import time
+from pathlib import Path
 
 from core.service.anchor import Anchor
 from core.ui.layout.box_layout import BoxLayout
@@ -33,7 +34,6 @@ class SimulationView(CoreSimulationView):
     brain: Brain | str | None = None
     reference_brain: Brain
     snake_training: bool = False
-    current_generation: int | None
     max_generation: int = 10
     generation_size: int = 10
     training_arena_index: int
@@ -74,14 +74,11 @@ class SimulationView(CoreSimulationView):
         self.ui_manager.add(self.brain_map)
 
     def prepare_training_arenas(self) -> None:
+        self.reference_brain.generation += 1
         self.training_arenas = [Arena(self.reference_brain.mutate(), copy.deepcopy(self.world.reference_map))
                                 for _ in range(self.generation_size - 1)]
         self.training_arenas.append(Arena(self.reference_brain, copy.deepcopy(self.world.reference_map)))
         self.training_arena_index = 0
-        if self.current_generation is None:
-            self.current_generation = 0
-        else:
-            self.current_generation += 1
 
         if self.show_training:
             self.released_arena = self.training_arenas[self.training_arena_index]
@@ -91,7 +88,6 @@ class SimulationView(CoreSimulationView):
         super().on_show_view()
         self.prepare_buttons()
         self.prepare_world()
-        self.current_generation = None
 
         # todo: rewrite this lines
         self.reference_brain = Brain.get_default()
@@ -137,11 +133,14 @@ class SimulationView(CoreSimulationView):
                 scores = {arena.snake.get_score(): arena for arena in self.training_arenas}
                 arena = scores[max(scores)]
                 self.reference_brain = arena.snake.brain
-                if self.current_generation < self.max_generation:
+                if self.reference_brain.generation < self.max_generation:
                     self.prepare_training_arenas()
                 else:
-                    # todo: сделать путь уникальным
-                    arena.dump_brain(f"{self.settings.BRAINS_PATH}/temp.json")
+                    folder = Path(self.settings.BRAINS_PATH)
+                    if not folder.exists():
+                        folder.mkdir(parents = True)
+                    arena.dump_brain(f"{folder}/{arena.snake.brain.save_name}")
+                    self.snake_training = False
 
     def train(self, cycles: int) -> bool:
         for _ in range(cycles):

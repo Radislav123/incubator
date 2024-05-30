@@ -5,6 +5,11 @@ import sys
 from typing import Self
 
 
+NeuronDescription = dict[str, list[float] | str]
+LayerDescription = list[NeuronDescription]
+BrainDescription = dict[str, list[LayerDescription] | str | int]
+
+
 class Neuron:
     max_mutation_spread = 0.1
     weight_borders = [-1, 1]
@@ -14,6 +19,9 @@ class Neuron:
         self.input_weights = input_weights
         self.inputs_amount = len(self.input_weights)
         self.output: float = 0
+
+    def __hash__(self) -> int:
+        return hash(sum(hash(x) for x in self.input_weights))
 
     @classmethod
     def get_default(cls, input_weights: list[float], *args, **kwargs) -> Self:
@@ -33,7 +41,7 @@ class Neuron:
         return data
 
     @classmethod
-    def load(cls, dictionary: dict) -> Self:
+    def load(cls, dictionary: NeuronDescription) -> Self:
         return cls(**dictionary)
 
     @classmethod
@@ -49,8 +57,11 @@ class Neuron:
 
 class OutputNeuron(Neuron):
     def __init__(self, input_weights: list[float], value: int, *args, **kwargs) -> None:
-        super().__init__(input_weights)
+        super().__init__(input_weights, *args, **kwargs)
         self.value = value
+
+    def __hash__(self) -> int:
+        return hash(sum(hash(x) for x in self.input_weights) + hash(self.value))
 
     def __gt__(self, other: "OutputNeuron") -> bool:
         return self.output > other.output
@@ -60,9 +71,14 @@ class OutputNeuron(Neuron):
 
 
 class Brain:
-    def __init__(self) -> None:
+    def __init__(self, generation: int, name: str | None = None) -> None:
         self.layers: list[list[Neuron | OutputNeuron]] = []
         self.output: float = 0
+        self.generation = generation
+        self.name = name
+
+    def __hash__(self) -> int:
+        return hash(sum(hash(y) for x in self.layers for y in x))
 
     @classmethod
     def get_default(cls) -> Self:
@@ -80,17 +96,32 @@ class Brain:
         for index, neuron in enumerate(output_layer):
             neuron["value"] = index - len(output_layer) // 2
 
-        description = [input_layer, output_layer]
+        description = {
+            "layers": [input_layer, output_layer],
+            "generation": 0
+        }
         brain = cls.load(description)
         return brain
 
-    def dump(self) -> list[list[dict]]:
-        return [[neuron.dump() for neuron in layer] for layer in self.layers]
+    def dump(self) -> BrainDescription:
+        data = {
+            "layers": [[neuron.dump() for neuron in layer] for layer in self.layers],
+            "generation": self.generation
+        }
+        if self.name is not None:
+            data["name"] = self.name
+        return data
 
     @classmethod
-    def load(cls, data: list[list[dict]]) -> Self:
-        brain = cls()
-        for layer_description in data:
+    def load(cls, data: dict) -> Self:
+        generation = data["generation"]
+        if "name" in data:
+            name = data["name"]
+        else:
+            name = None
+        brain = cls(generation, name)
+
+        for layer_description in data["layers"]:
             layer = []
             brain.layers.append(layer)
             for neuron_description in layer_description:
@@ -112,6 +143,14 @@ class Brain:
         self.output = max(self.layers[-1]).value
 
     def mutate(self) -> Self:
-        new_brain = self.__class__()
+        new_brain = self.__class__(self.generation, self.name)
         new_brain.layers = [[neuron.mutate() for neuron in layer] for layer in self.layers]
         return new_brain
+
+    @property
+    def save_name(self) -> str:
+        if self.name is not None:
+            name = self.name
+        else:
+            name = hash(self)
+        return f"{name}_{self.generation}.json"
