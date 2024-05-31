@@ -11,7 +11,25 @@ LayerDescription = list[NeuronDescription]
 BrainDescription = dict[str, list[LayerDescription] | str | int]
 
 
-class Neuron:
+# https://www.mathway.com/ru/Graph
+class FunctionsMixin:
+    max_mutation_spread: float
+    weight_borders: list[int]
+    output_borders: list[int]
+
+    input_weights: list[float]
+    inputs_amount: int
+    output: float
+
+    def sigmoid(self, inputs: list[float]) -> None:
+        value = sum(inputs[x] * self.input_weights[x] for x in range(self.inputs_amount))
+        # https://ru.wikipedia.org/wiki/%D0%A1%D0%B8%D0%B3%D0%BC%D0%BE%D0%B8%D0%B4%D0%B0
+        # чем больше t, тем круче подъем
+        t = 8
+        self.output = 1 / (1 + math.e**(-t * value))
+
+
+class Neuron(FunctionsMixin):
     max_mutation_spread = 0.1
     weight_borders = [-1, 1]
     output_borders = [0, 1]
@@ -25,9 +43,7 @@ class Neuron:
         return hash(sum(hash(x) for x in self.input_weights))
 
     def process(self, inputs: list[float]) -> None:
-        value = sum(inputs[x] * self.input_weights[x] for x in range(self.inputs_amount))
-        t = 3
-        self.output = 1 / (1 + math.e**(-t * value))
+        self.sigmoid(inputs)
 
     def dump(self) -> dict:
         data = {key: value for key, value in self.__dict__.items()

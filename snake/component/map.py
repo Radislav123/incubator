@@ -56,5 +56,7 @@ class Map:
         free_tiles = [(x, y) for x in range(self.square_side_length) for y in range(self.square_side_length)
                       if self.surface[x][y] and not self.borders[x][y] and not self.snake[x][y]]
         tile = free_tiles[random.randint(0, len(free_tiles) - 1)]
+        if (10, 10) in free_tiles:
+            tile = (10, 10)
 
         self.food[tile[0]][tile[1]] = True

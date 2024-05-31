@@ -55,7 +55,7 @@ class SimulationView(CoreSimulationView):
     last_generation_trained_time: datetime.datetime | None
     best_brains_amount = 3
     best_brains: list[Brain] | None
-    save_best_brains = True
+    save_best_brains = False
 
     def prepare_buttons(self) -> None:
         layout = BoxLayout()
