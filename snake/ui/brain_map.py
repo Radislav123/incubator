@@ -22,7 +22,7 @@ class NeuronMap(SnakeStyleButtonMixin, TextureButton):
     radius = 20
     default_textures: dict[float, Texture] = None
 
-    output_step = 0.1
+    output_step = 0.05
     outputs = list(float_range(*Neuron.output_borders, output_step))
 
     def __init__(self, neuron: Neuron, **kwargs) -> None:
@@ -64,7 +64,7 @@ class LayerLabel(SnakeStyleButtonMixin, Label):
 class BrainMap(BoxLayout):
     settings = Settings()
     gap = (20, 40, 20, 40)
-    space_between_layers = 40
+    space_between_layers = 50
     space_between_neurons = 20
 
     def __init__(self, view: "SimulationView", **kwargs) -> None:
@@ -100,15 +100,16 @@ class BrainMap(BoxLayout):
         layers = self.children
         layers_space = self.space_between_layers
         neurons_space = self.space_between_neurons
-        diameter = NeuronMap.radius * 2
+        radius = NeuronMap.radius
+        diameter = radius * 2
         synapse_width = 0.7
         max_layer = max(len(x.children) for x in layers)
 
         for index, neuron in enumerate(layers[0].children[1:]):
             x_0 = self.gap[3] // 2
             x_1 = self.gap[3]
-            y = (self.view.window.height - NeuronMap.radius - self.gap[1] - neurons_space
-                 - (diameter + neurons_space) * index)
+            y = (self.view.window.height - radius - self.gap[1] - neurons_space
+                 - (diameter + neurons_space) * (index + (max_layer - len(layers[0].children)) / 2))
             neuron: NeuronMap
             color = self.get_synapse_color(neuron.neuron.input_weights[0])
             synapse = arcade.shape_list.create_line(x_0, y, x_1, y, color, synapse_width * 1.2)
@@ -120,10 +121,10 @@ class BrainMap(BoxLayout):
             for index_0, _ in enumerate(layer_0.children[1:]):
                 x_0 = self.gap[3] + diameter + (diameter + layers_space) * layer_index
                 x_1 = self.gap[3] + (diameter + layers_space) * (layer_index + 1)
-                y_0 = (self.view.window.height - NeuronMap.radius - self.gap[1] - neurons_space
+                y_0 = (self.view.window.height - radius - self.gap[1] - neurons_space
                        - (neurons_space + diameter) * (((max_layer - len(layer_0.children)) / 2) + index_0))
                 for index_1, neuron_1 in enumerate(layer_1.children[1:]):
-                    y_1 = (self.view.window.height - NeuronMap.radius - self.gap[1] - neurons_space
+                    y_1 = (self.view.window.height - radius - self.gap[1] - neurons_space
                            - (neurons_space + diameter) * (((max_layer - len(layer_1.children)) / 2) + index_1))
                     neuron_1: NeuronMap
                     color = self.get_synapse_color(neuron_1.neuron.input_weights[index_0])

@@ -26,6 +26,7 @@ class Snake:
         True: Color.SNAKE_ALIVE,
         False: Color.SNAKE_DEAD
     }
+    max_sensor_distance = 10
 
     def __init__(self, brain: Brain, world_map: Map) -> None:
         self.brain = brain
@@ -72,7 +73,8 @@ class Snake:
                 distance = 1
                 x = self.head.x + offset[0]
                 y = self.head.y + offset[1]
-                while 0 <= x < self.world_map.square_side_length and 0 <= y < self.world_map.square_side_length:
+                while (0 <= x < self.world_map.square_side_length and 0 <= y < self.world_map.square_side_length
+                       and distance < self.max_sensor_distance):
                     if sensor_map[x][y]:
                         sensor_value = 1 / distance
                         break
@@ -101,7 +103,7 @@ class Snake:
 
         border_collision = self.world_map.borders[self.head.x + move_x][self.head.y + move_y]
         segment_collision = self.world_map.snake[self.head.x + move_x][self.head.y + move_y]
-        starvation_death = self.starvation > self.max_starvation
+        starvation_death = self.starvation >= (self.max_starvation - 1)
 
         self.alive = not (border_collision or segment_collision or starvation_death)
         if self.alive:
@@ -117,4 +119,8 @@ class Snake:
         self.age += 1
 
     def get_score(self) -> float:
-        return len(self.segments)
+        length = len(self.segments)
+        score = length
+        if length > 10:
+            score += length / self.age
+        return score

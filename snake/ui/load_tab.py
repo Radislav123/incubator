@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 class Load(SnakeStyleButtonMixin, TextureButton):
     settings = Settings()
 
-    default_width = 400
+    default_width = 450
     default_height = 50
 
     latest_normal_style = UITextureButton.UIStyle(
@@ -54,10 +54,8 @@ class Load(SnakeStyleButtonMixin, TextureButton):
 
         if self.path is None:
             self.brain = Brain.get_default()
-            self.score = 0
         else:
             self.brain = Brain.load_from_file(self.path)
-            self.score = self.brain.loading_dict["score"]
 
         super().__init__(width = self.default_width, height = self.default_height, **kwargs)
 
@@ -65,10 +63,10 @@ class Load(SnakeStyleButtonMixin, TextureButton):
 
     def __gt__(self, other: "Load") -> bool:
         if self.path is not None and other.path is not None:
-            params = ["score", "generation"]
-            for param in params:
-                self_param = self.brain.loading_dict[param]
-                other_param = other.brain.loading_dict[param]
+            brain_params = ["score", "generation"]
+            for param in brain_params:
+                self_param = getattr(self.brain, param)
+                other_param = getattr(other.brain, param)
                 if self_param != other_param:
                     greater = self_param < other_param
                     break
@@ -92,13 +90,13 @@ class Load(SnakeStyleButtonMixin, TextureButton):
         if self.path is None:
             text.append("Новый")
         else:
-            max_generation_len = int(math.log10(max(x.brain.generation for x in self.load_tab.loads.values()))) + 1
+            max_generation_len = max(len(str(x.brain.generation)) for x in self.load_tab.loads.values())
             generation_str = str(self.brain.generation)
             generation_str_len = (max_generation_len - len(generation_str)) * spaces_to_char + len(generation_str)
             generation_str = generation_str.ljust(generation_str_len)
 
-            max_score_len = int(math.log10(max(x.score for x in self.load_tab.loads.values()))) + 1
-            score_str = str(self.score)
+            max_score_len = max(len(str(x.brain.pretty_score)) for x in self.load_tab.loads.values())
+            score_str = str(self.brain.pretty_score)
             score_str_len = (max_score_len - len(score_str)) * spaces_to_char + len(score_str)
             score_str = score_str.ljust(score_str_len)
 

@@ -5,16 +5,14 @@ from core.ui.button.texture_button import TextureButton
 
 class Label(TextureButton):
     def __init__(self, **kwargs):
-        if "color" not in kwargs:
-            kwargs["color"] = Color.BACKGROUND
         if "width" not in kwargs:
             kwargs["width"] = 100
         if "height" not in kwargs:
             kwargs["height"] = 50
         if "texture" not in kwargs:
             kwargs["texture"] = Texture.create_empty(
-                str(kwargs),
+                f"{self.__class__}_{kwargs}",
                 (kwargs["width"], kwargs["height"]),
-                kwargs["color"]
+                kwargs["color"] if "color" in kwargs else Color.TRANSPARENT_WHITE
             )
         super().__init__(**kwargs)

@@ -127,7 +127,7 @@ class World:
 
         self.tiles_in_radius = 10
         self.border_thickness = 1
-        self.center = (self.view.window.width * 2 / 3, self.view.window.center_y)
+        self.center = (self.view.window.width * 69 / 100, self.view.window.center_y)
         self.position_to_tile_cache: dict[tuple[int, int], Tile | None] = {}
 
         # список плиток мира

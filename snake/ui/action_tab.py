@@ -46,10 +46,13 @@ class Train(ActionButton):
 
     def on_click(self, event: UIOnClickEvent) -> None:
         self.view.ui_manager.remove(self.action_tab)
-        self.view.max_generation = self.view.reference_brain.generation + self.action_tab.generations_amount.value
+        self.view.start_generation = self.view.reference_brain.generation
+        self.view.max_generation = self.view.start_generation + int(self.action_tab.generations_amount.value)
         self.view.generation_size = self.action_tab.generation_size.value
         self.view.prepare_training_arenas()
         self.view.snake_training = True
+        self.view.prepare_train_tab()
+        self.view.window.set_update_rate(self.view.train_update_rate)
 
 
 class Back(ActionButton):
@@ -63,13 +66,28 @@ class Back(ActionButton):
 
 
 class ActionTabSlider(SnakeStyleSliderMixin, StepSlider):
+    default_step = 10
+    default_value = 10
+    default_min_value = 0
+    default_max_value = 100
+
     def __init__(self, action_tab: "ActionTab") -> None:
-        super().__init__(step = 10, value = 10, max_value = 200, width = ActionButton.default_width)
+        super().__init__(
+            step = self.default_step,
+            value = self.default_value,
+            min_value = self.default_min_value,
+            max_value = self.default_max_value,
+            width = ActionButton.default_width
+        )
         self.action_tab = action_tab
         self.view = self.action_tab.view
 
 
 class GenerationsAmount(ActionTabSlider):
+    default_step = 50
+    default_value = 200
+    default_max_value = 2000
+
     def on_change(self, event: UIOnChangeEvent) -> None:
         super().on_change(event)
         self.action_tab.generations_amount_label.update_text()
@@ -99,7 +117,7 @@ class GenerationsAmountLabel(ActionTabLabel):
         self.update_text()
 
     def update_text(self) -> None:
-        self.text = f"Количество поколений: {self.actions_tab.generations_amount.value}"
+        self.text = f"Количество поколений: {int(self.actions_tab.generations_amount.value)}"
 
 
 class GenerationSizeLabel(ActionTabLabel):
@@ -108,7 +126,7 @@ class GenerationSizeLabel(ActionTabLabel):
         self.update_text()
 
     def update_text(self) -> None:
-        self.text = f"Размер поколения: {self.actions_tab.generation_size.value}"
+        self.text = f"Размер поколения: {int(self.actions_tab.generation_size.value)}"
 
 
 class ActionTab(BoxLayout):
