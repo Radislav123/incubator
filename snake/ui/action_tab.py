@@ -46,11 +46,12 @@ class Train(ActionButton):
 
     def on_click(self, event: UIOnClickEvent) -> None:
         self.view.ui_manager.remove(self.action_tab)
-        self.view.start_generation = self.view.reference_brain.generation
+        self.view.start_generation = self.view.reference_brains[0].generation
         self.view.max_generation = self.view.start_generation + int(self.action_tab.generations_amount.value)
-        self.view.generation_size = self.action_tab.generation_size.value
+        self.view.generation_size_by_brain = self.action_tab.generation_size.value
         self.view.prepare_training_arenas()
         self.view.snake_training = True
+        self.view.best_brains = []
         self.view.prepare_train_tab()
         self.view.window.set_update_rate(self.view.train_update_rate)
 
@@ -84,9 +85,9 @@ class ActionTabSlider(SnakeStyleSliderMixin, StepSlider):
 
 
 class GenerationsAmount(ActionTabSlider):
-    default_step = 50
-    default_value = 200
-    default_max_value = 2000
+    default_step = 100
+    default_value = 1000
+    default_max_value = 10000
 
     def on_change(self, event: UIOnChangeEvent) -> None:
         super().on_change(event)
@@ -94,6 +95,10 @@ class GenerationsAmount(ActionTabSlider):
 
 
 class GenerationSize(ActionTabSlider):
+    default_step = 1
+    default_value = 3
+    default_max_value = 10
+
     def on_change(self, event: UIOnChangeEvent) -> None:
         super().on_change(event)
         self.action_tab.generation_size_label.update_text()
@@ -126,7 +131,7 @@ class GenerationSizeLabel(ActionTabLabel):
         self.update_text()
 
     def update_text(self) -> None:
-        self.text = f"Размер поколения: {int(self.actions_tab.generation_size.value)}"
+        self.text = f"Размер поколения: {int(self.actions_tab.generation_size.value)}*{self.actions_tab.view.reference_brains_amount}"
 
 
 class ActionTab(BoxLayout):

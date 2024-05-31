@@ -26,7 +26,6 @@ class Snake:
         True: Color.SNAKE_ALIVE,
         False: Color.SNAKE_DEAD
     }
-    max_sensor_distance = 10
 
     def __init__(self, brain: Brain, world_map: Map) -> None:
         self.brain = brain
@@ -73,8 +72,7 @@ class Snake:
                 distance = 1
                 x = self.head.x + offset[0]
                 y = self.head.y + offset[1]
-                while (0 <= x < self.world_map.square_side_length and 0 <= y < self.world_map.square_side_length
-                       and distance < self.max_sensor_distance):
+                while 0 <= x < self.world_map.square_side_length and 0 <= y < self.world_map.square_side_length:
                     if sensor_map[x][y]:
                         sensor_value = 1 / distance
                         break

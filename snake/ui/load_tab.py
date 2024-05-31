@@ -68,10 +68,10 @@ class Load(SnakeStyleButtonMixin, TextureButton):
                 self_param = getattr(self.brain, param)
                 other_param = getattr(other.brain, param)
                 if self_param != other_param:
-                    greater = self_param < other_param
+                    greater = self_param > other_param
                     break
             else:
-                greater = self.path < other.path
+                greater = self.path > other.path
         elif self.path is None:
             greater = True
         else:
@@ -113,7 +113,7 @@ class Load(SnakeStyleButtonMixin, TextureButton):
 
     def on_click(self, event: UIOnClickEvent) -> None:
         self.view.ui_manager.remove(self.load_tab)
-        self.view.reference_brain = copy.deepcopy(self.brain)
+        self.view.reference_brains = [copy.deepcopy(self.brain)]
         self.view.prepare_actions_tab()
 
     def update_style(self, latest: bool) -> None:
@@ -126,7 +126,7 @@ class Load(SnakeStyleButtonMixin, TextureButton):
 
 
 class LoadTabLabel(SnakeStyleButtonMixin, CoreLabel):
-    columns = ["(Индекс)", "Название", "Поколение", "Счет"]
+    columns = ["(Индекс)", "Поколение", "Счет", "Название"]
     separator = " | "
 
     def __init__(self) -> None:

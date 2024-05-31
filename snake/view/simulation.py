@@ -41,17 +41,21 @@ class SimulationView(CoreSimulationView):
     snake_released: bool = False
     brain_map: BrainMap = None
 
-    reference_brain: Brain = None
+    reference_brains_amount = 3
+    reference_brains: list[Brain] = None
     snake_training: bool
     start_generation: int | None = None
     max_generation: int | None = None
-    generation_size: int | None = None
+    generation_size_by_brain: int | None = None
     training_arena_index: int
     training_arenas: list[Arena] = None
     show_training = False
 
     training_start_time: datetime.datetime | None
     last_generation_trained_time: datetime.datetime | None
+    best_brains_amount = 3
+    best_brains: list[Brain] | None
+    save_best_brains = True
 
     def prepare_buttons(self) -> None:
         layout = BoxLayout()
@@ -78,7 +82,7 @@ class SimulationView(CoreSimulationView):
 
     def prepare_released_arena(self) -> Arena:
         world_map = copy.deepcopy(self.world.reference_map)
-        snake = Snake(self.reference_brain, world_map)
+        snake = Snake(self.reference_brains[0], world_map)
         arena = Arena(snake)
         self.snake_perform_timer = 0
         return arena
@@ -97,9 +101,11 @@ class SimulationView(CoreSimulationView):
         else:
             self.last_generation_trained_time = datetime.datetime.now()
 
-        self.training_arenas = [Arena(Snake(self.reference_brain.mutate(), copy.deepcopy(self.world.reference_map)))
-                                for _ in range(self.generation_size - 1)]
-        self.training_arenas.append(Arena(Snake(self.reference_brain, copy.deepcopy(self.world.reference_map))))
+        self.training_arenas = [Arena(Snake(brain.mutate(), copy.deepcopy(self.world.reference_map))) for _ in
+                                range(self.generation_size_by_brain - 1) for brain in self.reference_brains]
+        self.training_arenas.extend(
+            Arena(Snake(brain, copy.deepcopy(self.world.reference_map))) for brain in self.reference_brains
+        )
         self.training_arena_index = 0
 
         if self.show_training:
@@ -175,19 +181,31 @@ class SimulationView(CoreSimulationView):
                 for arena in self.training_arenas:
                     arena.snake.brain.score = arena.snake.get_score()
                     arena.snake.brain.age = arena.snake.age
-                scores = {arena.snake.brain.score: arena for arena in self.training_arenas}
-                max_score = max(scores)
-                arena = scores[max_score]
-                self.reference_brain = arena.snake.brain
-                self.reference_brain.generation += 1
-                if self.reference_brain.generation < self.max_generation:
-                    self.reference_brain = copy.deepcopy(self.reference_brain)
+                brains = [x.snake.brain for x in
+                          sorted(self.training_arenas, key = lambda x: x.snake.brain.score, reverse = True)]
+
+                if self.save_best_brains:
+                    self.best_brains.extend(brains[:self.best_brains_amount])
+                    self.best_brains.sort(key = lambda x: x.score, reverse = True)
+                    self.best_brains = self.best_brains[:self.best_brains_amount]
+
+                self.reference_brains = brains[:self.reference_brains_amount]
+                for brain in self.reference_brains:
+                    brain.generation += 1
+
+                self.reference_brains = copy.deepcopy(self.reference_brains)
+                if self.reference_brains[0].generation < self.max_generation:
                     self.prepare_training_arenas()
                 else:
                     folder = Path(self.settings.BRAINS_PATH)
                     if not folder.exists():
                         folder.mkdir(parents = True)
-                    arena.snake.brain.dump_to_file(f"{folder}/{arena.snake.brain.save_name}")
+                    if self.save_best_brains:
+                        for brain in self.best_brains:
+                            brain.dump_to_file(f"{folder}/{brain.save_name}")
+                    for brain in self.reference_brains:
+                        brain.dump_to_file(f"{folder}/{brain.save_name}")
+
                     self.snake_training = False
                     self.max_generation = None
                     self.ui_manager.remove(self.train_tab)
@@ -196,13 +214,13 @@ class SimulationView(CoreSimulationView):
 
     def train(self, cycles: int) -> bool:
         for _ in range(cycles):
-            if self.training_arena_index < self.generation_size:
+            if self.training_arena_index < len(self.training_arenas):
                 arena = self.training_arenas[self.training_arena_index]
                 if arena.snake.alive:
                     arena.perform()
                 else:
                     self.training_arena_index += 1
-                    if self.show_training and self.training_arena_index < self.generation_size:
+                    if self.show_training and self.training_arena_index < len(self.training_arenas):
                         self.released_arena = self.training_arenas[self.training_arena_index]
                         self.prepare_brain_map()
             else:

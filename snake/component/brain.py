@@ -105,7 +105,7 @@ class Brain:
         input_layer = [Neuron.get_default_description(1) for _ in range(input_len)]
 
         previous_layer_len = input_len
-        inner_layer_lens = [9]
+        inner_layer_lens = [9, 6]
         inner_layers = []
         for layer_len in inner_layer_lens:
             layer = [Neuron.get_default_description(previous_layer_len) for _ in range(layer_len)]

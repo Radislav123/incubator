@@ -36,17 +36,17 @@ class TrainLabel(SnakeStyleButtonMixin, CoreLabel):
 
 class GenerationLabel(TrainLabel):
     def get_text(self) -> str:
-        return f"Поколение: {self.view.reference_brain.generation}/{self.view.max_generation}"
+        return f"Поколение: {self.view.reference_brains[0].generation}/{self.view.max_generation}"
 
 
 class ScoreLabel(TrainLabel):
     def get_text(self) -> str:
-        return f"Последний счёт: {self.view.reference_brain.pretty_score}"
+        return f"Последний счёт: {tuple(x.pretty_score for x in self.view.reference_brains)}"
 
 
 class AgeLabel(TrainLabel):
     def get_text(self) -> str:
-        return f"Последний возраст: {self.view.reference_brain.age}"
+        return f"Последний возраст: {tuple(x.age for x in self.view.reference_brains)}"
 
 
 class ArenaLabel(TrainLabel):
@@ -56,16 +56,18 @@ class ArenaLabel(TrainLabel):
 
 class AverageTimeLabel(TrainLabel):
     average_time: float = None
-    time_format = "%a, %d %b %Y %H:%M:%S +0000"
 
     def get_text(self) -> str:
         if self.view.last_generation_trained_time is None:
             time = "∞"
         else:
-            all_time = self.view.last_generation_trained_time - self.view.training_start_time
-            trained_generations = self.view.reference_brain.generation - self.view.start_generation
-            self.__class__.average_time = all_time.total_seconds() / trained_generations
-            time = self.get_average_time()
+            try:
+                all_time = self.view.last_generation_trained_time - self.view.training_start_time
+                trained_generations = self.view.reference_brains[0].generation - self.view.start_generation
+                self.__class__.average_time = all_time.total_seconds() / trained_generations
+                time = self.get_average_time()
+            except ZeroDivisionError:
+                time = "∞"
         return f"Время на поколение: {time}"
 
     def get_average_time(self) -> datetime.timedelta:
@@ -77,9 +79,7 @@ class EstimatedTime(TrainLabel):
         if self.train_tab.average_time_label.average_time is None:
             time = "∞"
         else:
-            generations_left = self.view.max_generation - self.view.reference_brain.generation
-            # todo: remove print
-            # print(generations_left, self.train_tab.average_time_label.get_average_time())
+            generations_left = self.view.max_generation - self.view.reference_brains[0].generation
             time = self.train_tab.average_time_label.get_average_time() * generations_left
         return f"Оставшееся время: {time}"
 
