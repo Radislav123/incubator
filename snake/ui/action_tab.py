@@ -49,6 +49,7 @@ class Train(ActionButton):
         self.view.start_generation = self.view.reference_brains[0].generation
         self.view.max_generation = self.view.start_generation + int(self.action_tab.generations_amount.value)
         self.view.generation_size_by_brain = self.action_tab.generation_size.value
+        self.view.reference_brains_amount = self.action_tab.reference_brains.value
         self.view.prepare_training_arenas()
         self.view.snake_training = True
         self.view.best_brains = []
@@ -83,11 +84,15 @@ class ActionTabSlider(SnakeStyleSliderMixin, StepSlider):
         self.action_tab = action_tab
         self.view = self.action_tab.view
 
+    def on_change(self, event: UIOnChangeEvent) -> None:
+        super().on_change(event)
+        self.value = max(self.value, self.step, self.default_min_value)
+
 
 class GenerationsAmount(ActionTabSlider):
-    default_step = 100
-    default_value = 500
-    default_max_value = 10000
+    default_step = 50
+    default_value = 100
+    default_max_value = 1000
 
     def on_change(self, event: UIOnChangeEvent) -> None:
         super().on_change(event)
@@ -96,12 +101,22 @@ class GenerationsAmount(ActionTabSlider):
 
 class GenerationSize(ActionTabSlider):
     default_step = 1
-    default_value = 3
-    default_max_value = 10
+    default_value = 10
+    default_max_value = 50
 
     def on_change(self, event: UIOnChangeEvent) -> None:
         super().on_change(event)
         self.action_tab.generation_size_label.update_text()
+
+
+class ReferenceBrains(ActionTabSlider):
+    default_step = 1
+    default_value = 10
+    default_max_value = 20
+
+    def on_change(self, event: UIOnChangeEvent) -> None:
+        super().on_change(event)
+        self.action_tab.reference_brains_label.update_text()
 
 
 class ActionTabLabel(SnakeStyleButtonMixin, Label):
@@ -114,24 +129,25 @@ class ActionTabLabel(SnakeStyleButtonMixin, Label):
             height = ActionButton.default_height,
             **kwargs
         )
+        self.update_text()
+
+    def update_text(self) -> None:
+        raise NotImplementedError()
 
 
 class GenerationsAmountLabel(ActionTabLabel):
-    def __init__(self, action_tab: "ActionTab", **kwargs) -> None:
-        super().__init__(action_tab, **kwargs)
-        self.update_text()
-
     def update_text(self) -> None:
         self.text = f"Количество поколений: {int(self.actions_tab.generations_amount.value)}"
 
 
 class GenerationSizeLabel(ActionTabLabel):
-    def __init__(self, action_tab: "ActionTab", **kwargs) -> None:
-        super().__init__(action_tab, **kwargs)
-        self.update_text()
-
     def update_text(self) -> None:
-        self.text = f"Размер поколения: {int(self.actions_tab.generation_size.value)}*{self.actions_tab.view.reference_brains_amount}"
+        self.text = f"Размер поколения: {int(self.actions_tab.generation_size.value)}*{self.actions_tab.reference_brains.value}"
+
+
+class ReferenceBrainsLabel(ActionTabLabel):
+    def update_text(self) -> None:
+        self.text = f"Количество переносимых змей: {self.actions_tab.reference_brains.value}"
 
 
 class ActionTab(BoxLayout):
@@ -139,8 +155,11 @@ class ActionTab(BoxLayout):
         self.view = view
         self.generations_amount = GenerationsAmount(self)
         self.generations_amount_label = GenerationsAmountLabel(self)
+        self.reference_brains = ReferenceBrains(self)
+        self.reference_brains_label = ReferenceBrainsLabel(self)
         self.generation_size = GenerationSize(self)
         self.generation_size_label = GenerationSizeLabel(self)
+
         children = [
             Back(self),
             Release(self),
@@ -148,7 +167,9 @@ class ActionTab(BoxLayout):
             self.generations_amount_label,
             self.generations_amount,
             self.generation_size_label,
-            self.generation_size
+            self.generation_size,
+            self.reference_brains_label,
+            self.reference_brains
         ]
         super().__init__(children = children, **kwargs)
 

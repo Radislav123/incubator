@@ -41,7 +41,7 @@ class SimulationView(CoreSimulationView):
     snake_released: bool = False
     brain_map: BrainMap = None
 
-    reference_brains_amount = 3
+    reference_brains_amount: int | None
     reference_brains: list[Brain] = None
     snake_training: bool
     start_generation: int | None = None
