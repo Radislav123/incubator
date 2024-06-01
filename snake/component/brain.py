@@ -100,7 +100,6 @@ class FeedbackNeuron(Neuron):
 
     @classmethod
     def get_default_description(cls, inputs_amount: int, *args, **kwargs) -> NeuronDescription:
-        print(len(super().get_default_description(inputs_amount + cls.history_depth, *args, **kwargs)["input_weights"]))
         return super().get_default_description(inputs_amount + cls.history_depth, *args, **kwargs)
 
     def process(self, inputs: list[float]) -> None:
@@ -158,19 +157,22 @@ class Brain:
     @classmethod
     def get_default(cls) -> Self:
         input_len = 9
+        output_len = 3
+        inner_layer_lens = [input_len, (input_len + output_len) // 2]
         input_layer = [InputNeuron.get_default_description(1) for _ in range(input_len)]
 
         previous_layer_len = input_len
-        inner_layer_lens = [9, 6]
         inner_layers = []
         for layer_len in inner_layer_lens:
             layer = [InnerNeuron.get_default_description(previous_layer_len) for _ in range(layer_len)]
             inner_layers.append(layer)
             previous_layer_len = layer_len
 
-        output_len = 3
         output_layer = [OutputNeuron.get_default_description(previous_layer_len, value - output_len // 2)
                         for value in range(output_len)]
+        # перемещает нейрон, отвечающий за движение прямо, на первое место,
+        # чтобы змеи изначально двигались прямо, а не по кругу
+        output_layer.insert(0, output_layer.pop(output_len // 2))
 
         description = {
             "layers": [input_layer, *inner_layers, output_layer],

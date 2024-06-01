@@ -137,9 +137,9 @@ class BrainMap(BoxLayout):
         color_difference_positive = [Color.SYNAPSE_POSITIVE[i] - Color.SYNAPSE_NEUTRAL[i] for i in range(color_length)]
         color_difference_negative = [Color.SYNAPSE_NEGATIVE[i] - Color.SYNAPSE_NEUTRAL[i] for i in range(color_length)]
         if weight >= 0:
-            color = [int(Color.SYNAPSE_NEUTRAL[i] + color_difference_positive[i] * weight)
+            color = [int(Color.SYNAPSE_NEUTRAL[i] + color_difference_positive[i] * weight / Neuron.weight_borders[1])
                      for i in range(color_length)]
         else:
-            color = [int(Color.SYNAPSE_NEUTRAL[i] - color_difference_negative[i] * weight)
+            color = [int(Color.SYNAPSE_NEUTRAL[i] + color_difference_negative[i] * weight / Neuron.weight_borders[0])
                      for i in range(color_length)]
         return color
