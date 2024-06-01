@@ -3,7 +3,7 @@ import json
 import math
 import random
 import sys
-from typing import Self
+from typing import Callable, Self
 
 
 NeuronDescription = dict[str, list[float] | str | float]
@@ -45,17 +45,19 @@ class Neuron(FunctionsMixin):
     max_mutation_spread = 0.1
     weight_borders = [-1, 1]
     output_borders = [0, 1]
+    function: Callable[[list[float]], float]
+    output_history_length = 100
 
     def __init__(self, input_weights: list[float], *args, **kwargs) -> None:
         self.input_weights = input_weights
         self.inputs_amount = len(self.input_weights)
-        self.output: float = 0
+        self.output_history: list[float] = [0 for _ in range(self.output_history_length)]
 
     def __hash__(self) -> int:
         return hash(sum(hash(x) for x in self.input_weights))
 
     def process(self, inputs: list[float]) -> None:
-        self.output = self.sigmoid(inputs)
+        self.output_history = [self.function(inputs), *self.output_history[:self.output_history_length - 1]]
 
     def dump(self) -> dict:
         data = {key: value for key, value in self.__dict__.items()
@@ -88,8 +90,34 @@ class Neuron(FunctionsMixin):
         }
         return description
 
+    @property
+    def output(self) -> float:
+        return self.output_history[0]
+
+
+class FeedbackNeuron(Neuron):
+    history_depth = 1
+
+    @classmethod
+    def get_default_description(cls, inputs_amount: int, *args, **kwargs) -> NeuronDescription:
+        print(len(super().get_default_description(inputs_amount + cls.history_depth, *args, **kwargs)["input_weights"]))
+        return super().get_default_description(inputs_amount + cls.history_depth, *args, **kwargs)
+
+    def process(self, inputs: list[float]) -> None:
+        super().process([*inputs, *self.output_history[:self.history_depth]])
+
+
+class InputNeuron(Neuron):
+    function = FunctionsMixin.sigmoid
+
+
+class InnerNeuron(Neuron):
+    function = FunctionsMixin.sigmoid
+
 
 class OutputNeuron(Neuron):
+    function = FunctionsMixin.sigmoid
+
     def __init__(self, input_weights: list[float], value: int, *args, **kwargs) -> None:
         super().__init__(input_weights, *args, **kwargs)
         self.value = value
@@ -130,13 +158,13 @@ class Brain:
     @classmethod
     def get_default(cls) -> Self:
         input_len = 9
-        input_layer = [Neuron.get_default_description(1) for _ in range(input_len)]
+        input_layer = [InputNeuron.get_default_description(1) for _ in range(input_len)]
 
         previous_layer_len = input_len
         inner_layer_lens = [9, 6]
         inner_layers = []
         for layer_len in inner_layer_lens:
-            layer = [Neuron.get_default_description(previous_layer_len) for _ in range(layer_len)]
+            layer = [InnerNeuron.get_default_description(previous_layer_len) for _ in range(layer_len)]
             inner_layers.append(layer)
             previous_layer_len = layer_len
 
