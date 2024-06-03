@@ -3,6 +3,12 @@ from snake.component.map import Map
 from snake.service.color import Color
 
 
+class DeathCause:
+    STARVATION = 0
+    SEGMENT = 1
+    BORDER = 2
+
+
 class Segment:
     color = Color.SNAKE_ALIVE
 
@@ -39,6 +45,7 @@ class Snake:
         self.max_starvation = 300
         self.alive = True
         self.direction = 0
+        self.death_cause = None
 
     def add_segment(self, x: int, y: int) -> None:
         segment = Segment(self.world_map, x, y)
@@ -113,6 +120,12 @@ class Snake:
                 self.add_segment(tail_x, tail_y)
         else:
             Segment.color = Color.SNAKE_DEAD
+            if border_collision:
+                self.death_cause = DeathCause.BORDER
+            elif segment_collision:
+                self.death_cause = DeathCause.SEGMENT
+            elif starvation_death:
+                self.death_cause = DeathCause.STARVATION
 
         self.age += 1
 
