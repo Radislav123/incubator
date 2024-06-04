@@ -46,6 +46,7 @@ class Snake:
         self.alive = True
         self.direction = 0
         self.death_cause = None
+        self.available_directions: list[int] | None = None
 
     def add_segment(self, x: int, y: int) -> None:
         segment = Segment(self.world_map, x, y)
@@ -58,13 +59,7 @@ class Snake:
         for segment in self.segments:
             x, y = segment.move_to(x, y)
 
-    def choose_direction(self) -> None:
-        all_directions_amount = len(self.world_map.offsets)
-        directions_amount = 3
-        start_direction_offset = -(directions_amount // 2)
-        available_directions = [(self.direction + x + all_directions_amount) % all_directions_amount
-                                for x in range(start_direction_offset, directions_amount + start_direction_offset, 1)]
-
+    def get_inputs(self) -> list[float]:
         borders = []
         segments = []
         food = []
@@ -73,24 +68,28 @@ class Snake:
             (segments, self.world_map.snake),
             (food, self.world_map.food)
         )
-        for direction in available_directions:
-            offset = self.world_map.offsets[direction]
+        for direction in self.available_directions:
+            sector = self.world_map.get_sector(self.head.x, self.head.y, direction)
             for sensor, sensor_map in sensors:
-                distance = 1
-                x = self.head.x + offset[0]
-                y = self.head.y + offset[1]
-                while 0 <= x < self.world_map.square_side_length and 0 <= y < self.world_map.square_side_length:
+                sensor_value = 0
+                for x, y in sector:
                     if sensor_map[x][y]:
-                        sensor_value = 1 / distance
-                        break
-                    distance += 1
-                    x += offset[0]
-                    y += offset[1]
-                else:
-                    sensor_value = 0
+                        distance = (((self.head.x - x)**2 + (self.head.y - y)**2)**(1 / 2)
+                                    / self.world_map.direction_distance_correction[direction])
+                        sensor_value += 1 / distance
                 sensor.append(sensor_value)
-        inputs = [*borders, *segments, *food]
-        self.brain.process(inputs)
+
+        return [*borders, *segments, *food]
+
+    def choose_direction(self) -> None:
+        directions_amount = self.world_map.directions_amount
+        all_directions_amount = self.world_map.all_directions_amount
+
+        start_direction_offset = -(directions_amount // 2)
+        offsets = range(start_direction_offset, directions_amount + start_direction_offset, 1)
+        self.available_directions = [(self.direction + x + all_directions_amount) % all_directions_amount
+                                     for x in offsets]
+        self.brain.process(self.get_inputs())
 
         direction_change = self.brain.output + all_directions_amount
         self.direction = (self.direction + direction_change) % all_directions_amount
