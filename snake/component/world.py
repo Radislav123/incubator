@@ -82,6 +82,7 @@ class Tile(Sprite):
     def update_color(self) -> None:
         arena = self.world.view.released_arena
         show = (self.world.view.snake_released or self.world.view.show_training) and arena is not None
+
         if show and arena.world_map.snake[self.map_x][self.map_y]:
             snake = arena.snake
             color = snake.colors[snake.alive]
@@ -89,6 +90,10 @@ class Tile(Sprite):
             color = Color.FOOD
         else:
             color = self.colors[self.enabled]
+
+        if (self.world.view.show_sensored_tiles and self.world.view.released_arena is not None and
+                (self.map_x, self.map_y) in self.world.view.released_arena.snake.sensored_tiles):
+            color = (x - 8 if index < 3 else x for index, x in enumerate(color))
 
         if color != self.color:
             self.color = color

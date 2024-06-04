@@ -47,6 +47,7 @@ class Snake:
         self.direction = 0
         self.death_cause = None
         self.available_directions: list[int] | None = None
+        self.sensored_tiles: set[tuple[int, int]] = set()
 
     def add_segment(self, x: int, y: int) -> None:
         segment = Segment(self.world_map, x, y)
@@ -60,6 +61,7 @@ class Snake:
             x, y = segment.move_to(x, y)
 
     def get_inputs(self) -> list[float]:
+        self.sensored_tiles = set()
         borders = []
         segments = []
         food = []
@@ -68,8 +70,10 @@ class Snake:
             (segments, self.world_map.snake),
             (food, self.world_map.food)
         )
+
         for direction in self.available_directions:
             sector = self.world_map.get_sector(self.head.x, self.head.y, direction)
+            self.sensored_tiles.update(sector)
             for sensor, sensor_map in sensors:
                 sensor_value = 0
                 for x, y in sector:

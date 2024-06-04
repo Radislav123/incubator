@@ -50,6 +50,7 @@ class SimulationView(CoreSimulationView):
     training_arena_index: int
     training_arenas: list[Arena] = None
     show_training = False
+    show_sensored_tiles = False
 
     training_start_time: datetime.datetime | None
     last_generation_trained_time: datetime.datetime | None
