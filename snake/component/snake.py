@@ -42,7 +42,7 @@ class Snake:
 
         self.age = 0
         self.starvation = 0
-        self.max_starvation = 300
+        self.max_starvation = 50
         self.alive = True
         self.direction = 0
         self.death_cause = None
@@ -133,8 +133,5 @@ class Snake:
         self.age += 1
 
     def get_score(self) -> float:
-        length = len(self.segments)
-        score = length
-        if length > 10:
-            score += length / self.age
+        score = len(self.segments) + self.age / self.max_starvation
         return score

@@ -233,4 +233,5 @@ class SimulationView(CoreSimulationView):
 
     def on_mouse_press(self, x: int, y: int, button: int, modifiers: int) -> None:
         super().on_mouse_press(x, y, button, modifiers)
-        self.logger.debug(self.world.position_to_tile((x, y)))
+        tile = self.world.position_to_tile((x, y))
+        self.logger.debug(tile)

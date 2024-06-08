@@ -58,7 +58,6 @@ class Load(SnakeStyleButtonMixin, TextureButton):
             self.brain = Brain.load_from_file(self.path)
 
         super().__init__(width = self.default_width, height = self.default_height, **kwargs)
-
         self.place_text(anchor_x = Anchor.X.LEFT, align_x = 10)
 
     def __gt__(self, other: "Load") -> bool:
@@ -71,7 +70,7 @@ class Load(SnakeStyleButtonMixin, TextureButton):
                     greater = self_param > other_param
                     break
             else:
-                greater = self.path > other.path
+                greater = self.brain.name > other.brain.name
         elif self.path is None:
             greater = True
         else:
@@ -103,7 +102,7 @@ class Load(SnakeStyleButtonMixin, TextureButton):
             extend = [
                 generation_str,
                 score_str,
-                self.path.split('\\')[-1].split('.')[0]
+                self.brain.name
             ]
             text.extend(extend)
         text = LoadTabLabel.separator.join(text)

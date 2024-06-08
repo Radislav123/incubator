@@ -91,7 +91,7 @@ class ActionTabSlider(SnakeStyleSliderMixin, StepSlider):
 
 class GenerationsAmount(ActionTabSlider):
     default_step = 50
-    default_value = 100
+    default_value = 50
     default_max_value = 1000
 
     def on_change(self, event: UIOnChangeEvent) -> None:

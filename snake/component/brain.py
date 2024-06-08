@@ -148,7 +148,7 @@ class Brain:
         self.generation = generation
         self.score = score
         self.age = 0
-        self.name = name
+        self._name = name
         self.loading_dict: BrainDescription | None = None
 
     def __hash__(self) -> int:
@@ -158,7 +158,7 @@ class Brain:
     def get_default(cls) -> Self:
         input_len = 9
         output_len = 3
-        inner_layer_lens = [input_len, (input_len + output_len) // 2]
+        inner_layer_lens = [(input_len + output_len) // 2]
         input_layer = [InputNeuron.get_default_description(1) for _ in range(input_len)]
 
         previous_layer_len = input_len
@@ -242,12 +242,16 @@ class Brain:
         return new_brain
 
     @property
-    def save_name(self) -> str:
-        if self.name is not None:
-            name = self.name
+    def name(self) -> str:
+        if self._name is None:
+            name = str([len(x) for x in self.layers])
         else:
-            name = hash(self)
-        return f"{name}.{self.file_extension}"
+            name = self._name
+        return name
+
+    @property
+    def save_name(self) -> str:
+        return f"{hash(self)}.{self.file_extension}"
 
     @property
     def pretty_score(self) -> float:
