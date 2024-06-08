@@ -117,6 +117,7 @@ class ReferenceBrains(ActionTabSlider):
     def on_change(self, event: UIOnChangeEvent) -> None:
         super().on_change(event)
         self.action_tab.reference_brains_label.update_text()
+        self.action_tab.generation_size_label.update_text()
 
 
 class ActionTabLabel(SnakeStyleButtonMixin, Label):

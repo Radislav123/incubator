@@ -57,7 +57,8 @@ class Neuron(FunctionsMixin):
         return hash(sum(hash(x) for x in self.input_weights))
 
     def process(self, inputs: list[float]) -> None:
-        self.output_history = [self.function(inputs), *self.output_history[:self.output_history_length - 1]]
+        output = self.function(inputs)
+        self.output_history = [output, *self.output_history[:self.output_history_length - 1]]
 
     def dump(self) -> dict:
         data = {key: value for key, value in self.__dict__.items()

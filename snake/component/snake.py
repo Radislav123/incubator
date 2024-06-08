@@ -42,7 +42,7 @@ class Snake:
 
         self.age = 0
         self.starvation = 0
-        self.max_starvation = 50
+        self.max_starvation_by_segment = 15
         self.alive = True
         self.direction = 0
         self.death_cause = None
@@ -111,7 +111,7 @@ class Snake:
 
         border_collision = self.world_map.borders[self.head.x + move_x][self.head.y + move_y]
         segment_collision = self.world_map.snake[self.head.x + move_x][self.head.y + move_y]
-        starvation_death = self.starvation >= (self.max_starvation - 1)
+        starvation_death = self.starvation >= (self.max_starvation_by_segment * len(self.segments) - 1)
 
         self.alive = not (border_collision or segment_collision or starvation_death)
         if self.alive:
@@ -133,5 +133,6 @@ class Snake:
         self.age += 1
 
     def get_score(self) -> float:
-        score = len(self.segments) + self.age / self.max_starvation
+        length = len(self.segments)
+        score = length + self.age * 2 / self.max_starvation_by_segment / length / (1 + length)
         return score
