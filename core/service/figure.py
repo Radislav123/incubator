@@ -1,3 +1,5 @@
+import math
+
 from arcade.types import Point
 
 from core.service.functions import float_range
@@ -22,6 +24,9 @@ class Figure:
         self.points = {}
         for x in float_range(self.x_bounds[0], self.x_bounds[1], self.resolution):
             self.points[x] = self.count_y(x)
+
+    def get_walk_around_points(self, points_amount: int) -> list[tuple[float, float]]:
+        raise NotImplementedError()
 
     def count_y(self, x: float) -> list[float]:
         raise NotImplementedError()
@@ -77,6 +82,14 @@ class Circle(Ellipse):
     ):
         self.radius = radius
         super().__init__(self.radius, self.radius, center_x, center_y, resolution)
+
+    def get_walk_around_points(self, points_amount: int) -> list[tuple[float, float]]:
+        step = math.pi * 2 / points_amount
+        points = [(
+            self.center_x + math.cos(index * step) * self.radius,
+            self.center_y + math.sin(index * step) * self.radius
+        ) for index in range(points_amount)]
+        return points
 
 
 class Rectangle(ClosedFigure):

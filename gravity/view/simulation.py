@@ -53,7 +53,13 @@ class Body(Sprite):
         return f"Body_{hash(self)}"
 
     # оригинал описан в PymunkPhysicsEngine.add_sprite
-    def velocity_callback(self, body: pymunk.Body, gravity: tuple[float, float], damping: float, delta_time: float):
+    def velocity_callback(
+            self,
+            body: pymunk.Body,
+            gravity: tuple[float, float],
+            damping: float,
+            delta_time: float
+    ) -> None:
         # Custom damping
         if self.pymunk.damping is not None:
             adj_damping = ((self.pymunk.damping * 100.0) / 100.0)**delta_time

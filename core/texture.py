@@ -83,7 +83,7 @@ class Texture(ArcadeTexture):
             transparent_background: bool = True
     ) -> Self:
         figure = cls.get_figure(Circle, radius, radius, radius)
-        inner_radius = radius - border_thickness / 2
+        inner_radius = radius - border_thickness
         inner_figure = cls.get_figure(Circle, inner_radius, radius, radius)
         texture = cls.create_by_figure(
             figure,
@@ -138,7 +138,7 @@ class Texture(ArcadeTexture):
             background = Image.new("RGBA", size, background_color)
             image = Image.composite(image, background, image.getchannel(3))
 
-        return Texture(image)
+        return Texture(image, hit_box_algorithm = arcade.hitbox.algo_detailed)
 
     def with_image(self, image: PIL.Image.Image, maintain_ratio: bool = True, center: bool = True) -> Self:
         if maintain_ratio:
