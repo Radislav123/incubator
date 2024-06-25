@@ -45,7 +45,7 @@ class ScoreLabel(TabLabel):
 
 class FigureLabel(TabLabel):
     def update_text(self) -> None:
-        self.text = f"Фигура: {self.tab.view.figure.name_rus}"
+        self.text = self.tab.view.figure.name_rus
 
 
 class FigureAngleLabel(TabLabel):
@@ -62,9 +62,8 @@ class FigureSlider(TabSlider):
     default_value = 0
 
     def __init__(self, tab: "Tab", **kwargs) -> None:
-        self.default_max_value = len(tab.view.figures)
+        self.default_max_value = len(tab.view.figures) - 1
         super().__init__(tab, **kwargs)
-        self.values = self.values[:-1]
         self.set_figure()
 
     def set_figure(self) -> None:
@@ -73,6 +72,7 @@ class FigureSlider(TabSlider):
     def on_change(self, event: UIOnChangeEvent) -> None:
         super().on_change(event)
         self.set_figure()
+        self.tab.view.recreate_interest_points()
         self.tab.figure_label.update_text()
 
 

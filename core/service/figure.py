@@ -62,6 +62,8 @@ class Ellipse(ClosedFigure):
             resolution: float = 1
     ):
         super().__init__(center_x, center_y, resolution)
+        # semi_major_axis - ось x
+        # semi_minor_axis - ось y
         self.semi_major_axis = semi_major_axis
         self.semi_minor_axis = semi_minor_axis
         self.x_bounds = (center_x - semi_major_axis, center_x + semi_major_axis - 1)
@@ -77,6 +79,14 @@ class Ellipse(ClosedFigure):
             value = 2
         return value
 
+    def get_walk_around_points(self, points_amount: int) -> list[tuple[float, float]]:
+        step = math.pi * 2 / points_amount
+        points = [(
+            self.center_x + math.cos(index * step) * self.semi_major_axis,
+            self.center_y + math.sin(index * step) * self.semi_minor_axis
+        ) for index in range(points_amount)]
+        return points
+
 
 class Circle(Ellipse):
     name_rus = "Окружность"
@@ -90,14 +100,6 @@ class Circle(Ellipse):
     ):
         self.radius = radius
         super().__init__(self.radius, self.radius, center_x, center_y, resolution)
-
-    def get_walk_around_points(self, points_amount: int) -> list[tuple[float, float]]:
-        step = math.pi * 2 / points_amount
-        points = [(
-            self.center_x + math.cos(index * step) * self.radius,
-            self.center_y + math.sin(index * step) * self.radius
-        ) for index in range(points_amount)]
-        return points
 
 
 class Rectangle(ClosedFigure):

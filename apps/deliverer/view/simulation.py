@@ -5,7 +5,7 @@ from arcade import SpriteList
 from apps.deliverer.component.interest_point import InterestPoint
 from apps.deliverer.settings import Settings
 from apps.deliverer.ui.tab import AmountSlider, FigureAngleSlider, Tab
-from core.service.figure import Circle, Figure
+from core.service.figure import Circle, Ellipse, Figure
 from core.view.simulation import SimulationView as CoreSimulationView
 
 
@@ -34,14 +34,15 @@ class SimulationView(CoreSimulationView):
         self.figure_angle_old = 0
         self.figure_angle_new = FigureAngleSlider.default_value
 
-        # todo: добавить другие фигуры
+        center = (self.interest_points_center_x, self.interest_points_center_y)
         self.figures = [
-            Circle(200, self.interest_points_center_x, self.interest_points_center_y)
+            Circle(220, *center),
+            Ellipse(220, 150, *center)
         ]
 
     def rotate_interest_points(self) -> None:
         if self.figure_angle_new != self.figure_angle_old:
-            angle = math.radians(self.figure_angle_new - self.figure_angle_old)
+            angle = math.radians(self.figure_angle_old - self.figure_angle_new)
 
             for point in self.interest_points:
                 x_old = point.center_x - self.figure.center_x
@@ -65,6 +66,7 @@ class SimulationView(CoreSimulationView):
                 point = InterestPoint(center_x = int(x), center_y = int(y))
                 self.interest_points.append(point)
                 self.interest_point_zones.append(point.zone)
+        self.figure_angle_old = 0
         self.rotate_interest_points()
 
     def on_show_view(self) -> None:

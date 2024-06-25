@@ -18,11 +18,7 @@ class InterestPoint(Sprite):
         super().__init__(texture, 1, center_x, center_y, **kwargs)
 
         zone_radius = radius + 20
-        zone_color = tuple(
-            (Color.INTEREST_POINT[x] + Color.BACKGROUND[x]) // 2
-            for x in range(len(Color.INTEREST_POINT))
-        )
-        zone_texture = Texture.create_circle(zone_radius, 1, color = zone_color)
+        zone_texture = Texture.create_circle(zone_radius, 1, color = Color.INTEREST_POINT_ZONE)
         self.zone = InterestPointZone(zone_texture, 1, center_x, center_y, **kwargs)
 
     def __repr__(self) -> str:
