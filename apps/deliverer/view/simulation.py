@@ -1,8 +1,9 @@
 import math
+import random
 
-from arcade import SpriteList
+from arcade import PymunkPhysicsEngine, SpriteList
 
-from apps.deliverer.component.interest_point import InterestPoint
+from apps.deliverer.component.interest_point import InterestPoint, InterestPointZone
 from apps.deliverer.settings import Settings
 from apps.deliverer.ui.tab import AmountSlider, FigureAngleSlider, Tab
 from core.service.figure import Circle, Ellipse, Figure
@@ -11,30 +12,31 @@ from core.view.simulation import SimulationView as CoreSimulationView
 
 class SimulationView(CoreSimulationView):
     settings = Settings()
+    physics_engine = PymunkPhysicsEngine()
 
     score: int
 
-    interest_points_amount = AmountSlider.default_value
     figures: list[Figure] = None
     figure: Figure = None
     figure_angle_old: int | None = None
     figure_angle_new: int | None = None
-    interest_points_center_x: int
-    interest_points_center_y: int
+    figure_center_x: int
+    figure_center_y: int
 
-    interest_points = SpriteList(True)
-    interest_point_zones = SpriteList(True)
+    interest_points_amount = AmountSlider.default_value
+    interest_points = SpriteList[InterestPoint](True)
+    interest_point_zones = SpriteList[InterestPointZone](True)
 
     def reset_info(self) -> None:
         self.score = 0
 
     def prepare_figures(self) -> None:
-        self.interest_points_center_x = int(self.window.width * 59 / 100)
-        self.interest_points_center_y = int(self.window.center_y)
+        self.figure_center_x = int(self.window.width * 59 / 100)
+        self.figure_center_y = int(self.window.center_y)
         self.figure_angle_old = 0
         self.figure_angle_new = FigureAngleSlider.default_value
 
-        center = (self.interest_points_center_x, self.interest_points_center_y)
+        center = (self.figure_center_x, self.figure_center_y)
         self.figures = [
             Circle(220, *center),
             Ellipse(220, 150, *center)
@@ -58,16 +60,27 @@ class SimulationView(CoreSimulationView):
             self.figure_angle_old = self.figure_angle_new
 
     def recreate_interest_points(self) -> None:
-        self.interest_points.clear()
-        self.interest_point_zones.clear()
+        if self.interest_points_amount != len(self.interest_points):
+            for point in self.interest_points:
+                point.remove_from_sprite_lists()
+                point.zone.remove_from_sprite_lists()
+            self.interest_points.clear()
+            self.interest_point_zones.clear()
 
-        if self.interest_points_amount > 0:
-            for x, y in self.figure.get_walk_around_points(self.interest_points_amount):
-                point = InterestPoint(center_x = int(x), center_y = int(y))
-                self.interest_points.append(point)
-                self.interest_point_zones.append(point.zone)
-        self.figure_angle_old = 0
-        self.rotate_interest_points()
+            if self.interest_points_amount > 0:
+                sizes = [0 for _ in range(self.interest_points_amount)]
+                for potion in range(self.interest_points_amount * InterestPoint.default_size):
+                    sizes[random.randint(0, self.interest_points_amount - 1)] += 1
+
+                for index, (x, y) in enumerate(self.figure.get_walk_around_points(self.interest_points_amount)):
+                    # noinspection PyTypeChecker
+                    point = InterestPoint(int(x), int(y), sizes[index])
+                    self.physics_engine.add_sprite(point, point.size)
+                    self.interest_points.append(point)
+                    self.interest_point_zones.append(point.zone)
+
+                self.figure_angle_old = 0
+                self.rotate_interest_points()
 
     def on_show_view(self) -> None:
         super().on_show_view()
