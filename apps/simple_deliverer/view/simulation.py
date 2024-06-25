@@ -1,13 +1,11 @@
-import pymunk
-from arcade import Sprite, SpriteList
+from arcade import SpriteList
 
+from apps.simple_deliverer.component.interest_point import InterestPoint, InterestPointZone
+from apps.simple_deliverer.settings import Settings
 from core.service.anchor import Anchor
 from core.service.figure import Circle
-from core.texture import Texture
 from core.ui.button.texture_button import TextureButton
 from core.view.simulation import SimulationView as CoreSimulationView
-from apps.simple_deliverer.service.color import Color
-from apps.simple_deliverer.settings import Settings
 
 
 class ScoreLabel(TextureButton):
@@ -16,52 +14,13 @@ class ScoreLabel(TextureButton):
         super().__init__(text = str(self.view.score), **kwargs)
 
 
-class InterestPoint(Sprite):
-    settings = Settings()
-
-    def __init__(self, center_x: float, center_y: float, **kwargs) -> None:
-        texture = Texture.create_circle(10, 2, color = Color.INTEREST_POINT)
-        super().__init__(texture, 1, center_x, center_y, **kwargs)
-
-    def __repr__(self) -> str:
-        return f"InterestPoint{self.position}"
-
-
-class Deliverer(Sprite):
-    physics_body: pymunk.Body
-
-    def __init__(self, view: "SimulationView", *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        self.view = view
-
-    # оригинал описан в PymunkPhysicsEngine.add_sprite
-    def velocity_callback(
-            self,
-            body: pymunk.Body,
-            gravity: tuple[float, float],
-            damping: float,
-            delta_time: float
-    ) -> None:
-        # Custom damping
-        if self.pymunk.damping is not None:
-            adj_damping = ((self.pymunk.damping * 100.0) / 100.0)**delta_time
-            # print(f"Custom damping {sprite.pymunk.damping} {damping} default to {adj_damping}")
-            damping = adj_damping
-
-        # Custom gravity
-        if self.pymunk.gravity is not None:
-            gravity = self.pymunk.gravity
-
-        # Go ahead and update velocity
-        pymunk.Body.update_velocity(body, gravity, damping, delta_time)
-
-
 class SimulationView(CoreSimulationView):
     settings = Settings()
 
     score: int
     score_label: ScoreLabel
     interest_points: SpriteList[InterestPoint]
+    interest_point_zones: SpriteList[InterestPointZone]
 
     def reset_info(self) -> None:
         self.score = 0
@@ -70,9 +29,12 @@ class SimulationView(CoreSimulationView):
         figure = Circle(200, self.window.center_x, self.window.center_y)
         amount = 4
 
-        self.interest_points = SpriteList()
+        self.interest_points = SpriteList(True)
+        self.interest_point_zones = SpriteList(True)
         for x, y in figure.get_walk_around_points(amount):
-            self.interest_points.append(InterestPoint(center_x = int(x), center_y = int(y)))
+            point = InterestPoint(center_x = int(x), center_y = int(y))
+            self.interest_points.append(point)
+            self.interest_point_zones.append(point.zone)
 
     def on_show_view(self) -> None:
         super().on_show_view()
@@ -87,4 +49,5 @@ class SimulationView(CoreSimulationView):
     def on_draw(self) -> None:
         super().on_draw()
 
+        self.interest_point_zones.draw()
         self.interest_points.draw()
