@@ -1,7 +1,7 @@
 from arcade import Sprite
 
-from apps.simple_deliverer.service.color import Color
-from apps.simple_deliverer.settings import Settings
+from apps.deliverer.service.color import Color
+from apps.deliverer.settings import Settings
 from core.texture import Texture
 
 

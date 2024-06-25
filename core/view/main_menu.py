@@ -1,9 +1,9 @@
 from arcade.gui import UIBoxLayout, UIOnClickEvent
 
 from apps.clicker.view.simulation import SimulationView as ClickerSimulationView
+from apps.deliverer.view.simulation import SimulationView as SimpleDelivererSimulationView
 from apps.gravity.view.simulation import SimulationView as GravitySimulationView
 from apps.simple_clicker.view.simulation import SimulationView as SimpleClickerSimulationView
-from apps.simple_deliverer.view.simulation import SimulationView as SimpleDelivererSimulationView
 from apps.snake.view.simulation import SimulationView as SnakeSimulationView
 from core.ui.button.texture_button import TextureButton
 from core.view.menu import MenuView

@@ -10,6 +10,8 @@ class Figure:
     points: dict[float, list[float]] = None
     x_bounds: tuple[float, float]
 
+    name_rus = "Фигура"
+
     def __init__(
             self,
             center_x: float = 0,
@@ -35,6 +37,8 @@ class Figure:
 class ClosedFigure(Figure):
     border_points: dict[float, list[float]] = None
 
+    name_rus = "Замкнутая фигура"
+
     def belongs_value(self, x: float, y: float) -> float:
         # считается, что если value == 1, точка находится на границе, value < 1 - внутри, value > 1 - снаружи
         raise NotImplementedError()
@@ -47,6 +51,8 @@ class ClosedFigure(Figure):
 
 
 class Ellipse(ClosedFigure):
+    name_rus = "Эллипс"
+
     def __init__(
             self,
             semi_major_axis: float,
@@ -73,6 +79,8 @@ class Ellipse(ClosedFigure):
 
 
 class Circle(Ellipse):
+    name_rus = "Окружность"
+
     def __init__(
             self,
             radius: float,
@@ -93,6 +101,8 @@ class Circle(Ellipse):
 
 
 class Rectangle(ClosedFigure):
+    name_rus = "Прямоугольник"
+
     def __init__(
             self,
             width: float,
@@ -135,6 +145,8 @@ class Rectangle(ClosedFigure):
 # https://math.stackexchange.com/a/1649808
 # https://mathworld.wolfram.com/RoundedRectangle.html
 class RoundedRectangle(Rectangle):
+    name_rus = "Скругленный прямоугольник"
+
     # width, height - как и у обычного прямоугольника считаются от одного края до другого (противоположного
     def __init__(
             self,
