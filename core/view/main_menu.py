@@ -6,6 +6,7 @@ from core.view.menu import MenuView
 from core.view.simulation import SimulationView
 from gravity.view.simulation import SimulationView as GravitySimulationView
 from simple_clicker.view.simulation import SimulationView as SimpleClickerSimulationView
+from simple_deliverer.view.simulation import SimulationView as SimpleDelivererSimulationView
 from snake.view.simulation import SimulationView as SnakeSimulationView
 
 
@@ -26,7 +27,8 @@ class MainMenuView(MenuView):
             SimpleClickerSimulationView(),
             ClickerSimulationView(),
             GravitySimulationView(),
-            SnakeSimulationView()
+            SnakeSimulationView(),
+            SimpleDelivererSimulationView()
         )
 
     def construct_app_buttons(self) -> None:
