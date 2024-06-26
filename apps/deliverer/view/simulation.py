@@ -26,11 +26,11 @@ class SimulationView(CoreSimulationView):
     figure_center_y: int
 
     interest_points_amount = AmountSlider.default_value
-    interest_points = SpriteList[InterestPoint](True)
-    interest_point_zones = SpriteList[InterestPointZone](True)
+    interest_points: SpriteList[InterestPoint] = SpriteList[InterestPoint](True)
+    interest_point_zones: SpriteList[InterestPointZone] = SpriteList[InterestPointZone](True)
 
-    deliverers_amount = 10
-    deliverers = SpriteList[Deliverer](True)
+    deliverers_amount = 1
+    deliverers = SpriteList[Deliverer]()
 
     def reset_info(self) -> None:
         self.score = 0
@@ -120,6 +120,6 @@ class SimulationView(CoreSimulationView):
             point.zone.on_update()
 
         for deliverer in self.deliverers:
-            deliverer.on_update()
+            deliverer.on_update(delta_time)
 
         self.physics_engine.step(delta_time)

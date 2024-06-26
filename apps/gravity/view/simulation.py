@@ -66,13 +66,14 @@ class Body(Sprite):
             damping = adj_damping
 
         # Custom gravity
-        coeff = 10
+        coeff = 1000
         for other in self.view.bodies:
             distance_x = other.center_x - self.center_x
             distance_y = other.center_y - self.center_y
             distance_square = distance_x**2 + distance_y**2
             distance = distance_square**(1 / 2)
 
+            # чтобы не было рывков при коллизии
             if not (distance < self.width / 2 or distance < self.height / 2 or
                     distance < other.width / 2 or distance < other.height / 2):
                 adding_gravity = other.physics_body.mass / distance_square
