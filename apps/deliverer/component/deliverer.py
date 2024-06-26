@@ -8,6 +8,7 @@ import pymunk
 from arcade import Sprite
 
 from apps.deliverer.component.interest_point import InterestPoint
+from apps.deliverer.service.color import Color
 from apps.deliverer.settings import Settings
 from core.texture import Texture
 
@@ -31,21 +32,22 @@ class Deliverer(Sprite):
 
     def __init__(self, view: "SimulationView", **kwargs) -> None:
         self.view = view
-        self.departure: int = random.choices(range(len(self.view.interest_points)), k = 1)[0]
+        self.departure: int | None = None
         self.destination: int | None = None
+        self.next_point: int | None = None
 
         self.max_cargo = 1
         self.cargo = 0
 
         image = PIL.Image.open(f"{self.settings.IMAGES_FOLDER}/circle_0.png")
         texture = Texture(image, hit_box_algorithm = arcade.hitbox.algo_detailed)
-        position = list(self.view.interest_points[self.departure].position)
+        position = [self.view.figure_new.center_x, self.view.figure_new.center_y]
         angle = random.random() * math.pi * 2
-        coeff = 1.5
-        distance = max(InterestPoint.radius, self.radius) * 2 * coeff
+        distance = random.random() * self.radius * 10
         position[0] = position[0] + distance * math.cos(angle)
         position[1] = position[1] + distance * math.sin(angle)
         super().__init__(texture, 1, position[0], position[1], angle, **kwargs)
+        self.color = Color.DELIVERER_UNLOADED
 
         self.resize()
         self.update_physics()
@@ -98,11 +100,24 @@ class Deliverer(Sprite):
             self.distances_cache[rounded_position] = (distance_x, distance_y, distance_square, distance)
         return self.distances_cache[rounded_position]
 
+    def choose_departure(self) -> None:
+        max_size = max(x.size for x in self.view.interest_points)
+
+        departures = list(range(len(self.view.interest_points)))
+        weights = [max_size - x.size for x in self.view.interest_points]
+
+        if len(departures) > 0:
+            self.departure = random.choices(departures, weights)[0]
+        else:
+            self.departure = None
+
     def choose_destination(self) -> None:
         max_size = max(x.size for x in self.view.interest_points)
 
         destinations = list(range(len(self.view.interest_points)))
         weights = [max_size - x.size for x in self.view.interest_points]
+
+        # нет смысла перемещать груз в ту же точку
         destinations.remove(self.departure)
         weights = weights[:self.departure] + weights[self.departure + 1:]
 
@@ -118,6 +133,8 @@ class Deliverer(Sprite):
         self.cargo += cargo
         self.physics_body.mass += cargo
 
+        self.color = Color.DELIVERER_LOADED
+
     def unload_cargo(self) -> None:
         cargo = self.cargo
 
@@ -125,9 +142,11 @@ class Deliverer(Sprite):
         self.physics_body.mass -= cargo
         self.cargo -= cargo
 
-    # https://www.desmos.com/calculator/mi9w8ny5we?lang=ru
+        self.color = Color.DELIVERER_UNLOADED
+
     def apply_power(self, delta_time: float) -> None:
-        point = self.view.interest_points[self.destination]
+        point = self.view.interest_points[self.next_point]
+
         distance_x, distance_y, distance_square, distance = self.count_distances(point.position)
         velocity = self.physics_body.velocity
         velocity_projection = (abs(velocity[0]) * abs(distance_x) + abs(velocity[1]) * abs(distance_y)) / distance
@@ -152,6 +171,7 @@ class Deliverer(Sprite):
             threshold_offset = 1
             dumping_coeff = 0.1
 
+            # https://www.desmos.com/calculator/mi9w8ny5we?lang=ru
             # постоянное ускорение
             if estimated_time >= acceleration_threshold + threshold_offset:
                 acceleration_coeff = 1
@@ -197,33 +217,43 @@ class Deliverer(Sprite):
             )
 
     def update_angle(self) -> None:
-        point = self.view.interest_points[self.destination]
-        vector = (point.center_x - self.center_x, point.center_y - self.center_y)
-        axis = (1, 0)
-        axis_length = 1
+        if self.next_point is not None:
+            point = self.view.interest_points[self.next_point]
+            vector = (point.center_x - self.center_x, point.center_y - self.center_y)
+            axis = (1, 0)
+            axis_length = 1
 
-        distance_x, distance_y, distance_square, distance = self.count_distances(point.position)
-        if distance != 0:
-            cos = (vector[0] * axis[0] + vector[1] * axis[1]) / distance / axis_length
-            # ошибки округления дают cos > 1 и cos < -1
-            cos = max(min(cos, 1), -1)
-            angle = math.acos(cos)
-            if distance_y < 0:
-                angle = math.pi * 2 - angle
-            self.physics_body.angle = angle
+            distance_x, distance_y, distance_square, distance = self.count_distances(point.position)
+            if distance != 0:
+                cos = (vector[0] * axis[0] + vector[1] * axis[1]) / distance / axis_length
+                # ошибки округления дают cos > 1 и cos < -1
+                cos = max(min(cos, 1), -1)
+                angle = math.acos(cos)
+                if distance_y < 0:
+                    angle = math.pi * 2 - angle
+                self.physics_body.angle = angle
 
     # noinspection PyMethodOverriding
     def on_update(self, delta_time: float) -> None:
-        if self.destination is not None:
-            self.update_angle()
-            if self.collides_with_sprite(self.view.interest_point_zones[self.destination]):
-                self.unload_cargo()
-                self.departure = self.destination
-                self.destination = None
-            else:
-                self.apply_power(delta_time)
-        else:
+        if self.departure is None:
+            self.choose_departure()
             self.choose_destination()
-            self.load_cargo()
+            self.next_point = self.departure
+
+        # noinspection PyTypeChecker
+        point: InterestPoint = self.view.interest_points[self.next_point]
+        if self.collides_with_sprite(point.zone):
+            if self.next_point == self.departure:
+                self.load_cargo()
+                self.next_point = self.destination
+            elif self.next_point == self.destination:
+                self.unload_cargo()
+                self.departure = None
+                self.destination = None
+                self.next_point = None
+            else:
+                raise ValueError(f"Unknown next point: {self.next_point}")
+        else:
+            self.apply_power(delta_time)
 
         self.distances_cache = {}

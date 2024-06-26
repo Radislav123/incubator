@@ -139,6 +139,8 @@ class SimulationView(CoreSimulationView):
         self.interest_points.draw()
 
         self.deliverers.draw()
+        for deliverer in self.deliverers:
+            deliverer.update_angle()
 
     def on_update(self, delta_time: float) -> None:
         for point in self.interest_points:
