@@ -29,7 +29,8 @@ class SimulationView(CoreSimulationView):
     interest_points: SpriteList[InterestPoint] = SpriteList[InterestPoint](True)
     interest_point_zones: SpriteList[InterestPointZone] = SpriteList[InterestPointZone](True)
 
-    deliverers_amount = 1
+    # todo: вынести в параметры
+    deliverers_amount = 10
     deliverers = SpriteList[Deliverer]()
 
     def reset_info(self) -> None:

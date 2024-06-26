@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING
 
 from arcade.gui import UIOnChangeEvent
 
+from apps.deliverer.component.deliverer import Deliverer
 from core.service.anchor import Anchor
 from core.texture import Texture
 from core.ui.layout.box_layout import BoxLayout
@@ -58,6 +59,11 @@ class AmountLabel(TabLabel):
         self.text = f"Количество: {self.tab.view.interest_points_amount}"
 
 
+class RadiusLabel(TabLabel):
+    def update_text(self) -> None:
+        self.text = f"Радиус курьера: {Deliverer.radius}"
+
+
 class FigureSlider(TabSlider):
     default_value = 0
 
@@ -98,6 +104,21 @@ class AmountSlider(TabSlider):
         self.tab.amount_label.update_text()
 
 
+class RadiusSlider(TabSlider):
+    default_value = Deliverer.default_radius
+    default_min_value = 1
+    default_max_value = Deliverer.default_radius * 2
+
+    def on_change(self, event: UIOnChangeEvent) -> None:
+        super().on_change(event)
+        Deliverer.radius = int(self.value)
+        print(Deliverer.radius)
+        for deliverer in self.tab.view.deliverers:
+            deliverer.resize()
+            deliverer.update_physics()
+        self.tab.radius_label.update_text()
+
+
 class Tab(BoxLayout):
     gap = 10
 
@@ -109,6 +130,7 @@ class Tab(BoxLayout):
         self.figure_label = FigureLabel(self)
         self.figure_angle_label = FigureAngleLabel(self)
         self.amount_label = AmountLabel(self)
+        self.radius_label = RadiusLabel(self)
         children = [
             self.score_label,
             self.figure_label,
@@ -116,7 +138,9 @@ class Tab(BoxLayout):
             self.figure_angle_label,
             FigureAngleSlider(self),
             self.amount_label,
-            AmountSlider(self)
+            AmountSlider(self),
+            self.radius_label,
+            RadiusSlider(self)
         ]
 
         super().__init__(children = children, **kwargs)
