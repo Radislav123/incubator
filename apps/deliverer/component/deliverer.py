@@ -9,6 +9,7 @@ from arcade import Sprite
 
 from apps.deliverer.component.interest_point import InterestPoint
 from apps.deliverer.settings import Settings
+from apps.deliverer.ui.tab import DelivererRadiusSlider
 from core.texture import Texture
 
 
@@ -23,11 +24,11 @@ class Deliverer(Sprite):
     settings = Settings()
     physics_body: pymunk.Body
 
-    default_radius = 10
-    radius = default_radius
+    radius = DelivererRadiusSlider.default_value
     default_mass = 10
     # todo: вынести в параметры
-    power = 2000
+    default_power = 2000
+    power = default_power
 
     def __init__(self, view: "SimulationView", **kwargs) -> None:
         self.view = view

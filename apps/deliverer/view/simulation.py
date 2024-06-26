@@ -6,7 +6,7 @@ from arcade import PymunkPhysicsEngine, SpriteList
 from apps.deliverer.component.deliverer import Deliverer
 from apps.deliverer.component.interest_point import InterestPoint, InterestPointZone
 from apps.deliverer.settings import Settings
-from apps.deliverer.ui.tab import AmountSlider, FigureAngleSlider, Tab
+from apps.deliverer.ui.tab import DeliverersAmountSlider, FigureAngleSlider, InterestPointsAmountSlider, Tab
 from core.service.figure import Circle, Ellipse, Figure
 from core.view.simulation import SimulationView as CoreSimulationView
 
@@ -14,6 +14,7 @@ from core.view.simulation import SimulationView as CoreSimulationView
 class SimulationView(CoreSimulationView):
     settings = Settings()
     physics_engine = PymunkPhysicsEngine()
+    interest_points_tab: Tab
 
     score: int
 
@@ -25,12 +26,11 @@ class SimulationView(CoreSimulationView):
     figure_center_x: int
     figure_center_y: int
 
-    interest_points_amount = AmountSlider.default_value
+    interest_points_amount = InterestPointsAmountSlider.default_value
     interest_points: SpriteList[InterestPoint] = SpriteList[InterestPoint](True)
     interest_point_zones: SpriteList[InterestPointZone] = SpriteList[InterestPointZone](True)
 
-    # todo: вынести в параметры
-    deliverers_amount = 10
+    deliverers_amount = DeliverersAmountSlider.default_value
     deliverers = SpriteList[Deliverer]()
 
     def reset_info(self) -> None:
@@ -89,20 +89,45 @@ class SimulationView(CoreSimulationView):
 
             self.figure_old = self.figure_new
 
+    def add_deliverer(self) -> None:
+        deliverer = Deliverer(self)
+        self.deliverers.append(deliverer)
+
+    def remove_deliverer(self, deliverer: Deliverer) -> None:
+        # возвращение недоставленного груза
+        self.interest_points[deliverer.departure].size += deliverer.cargo
+        deliverer.remove_from_sprite_lists()
+
     def prepare_deliverers(self) -> None:
         self.deliverers.clear()
 
         for _ in range(self.deliverers_amount):
-            deliverer = Deliverer(self)
-            self.deliverers.append(deliverer)
+            self.add_deliverer()
+
+        self.interest_points_tab.deliverers_amount_label.update_text()
+
+    def change_deliverers_amount(self) -> None:
+        amount_diff = self.deliverers_amount - len(self.deliverers)
+
+        # нужно добавить
+        if amount_diff > 0:
+            for _ in range(amount_diff):
+                self.add_deliverer()
+            self.interest_points_tab.deliverers_amount_label.update_text()
+        # нужно убрать
+        elif amount_diff < 0:
+            deliverers_to_remove = self.deliverers[:-amount_diff]
+            for deliverer in deliverers_to_remove:
+                self.remove_deliverer(deliverer)
+            self.interest_points_tab.deliverers_amount_label.update_text()
 
     def on_show_view(self) -> None:
         super().on_show_view()
         self.reset_info()
 
         self.prepare_figures()
-        interest_points_tab = Tab(self)
-        self.ui_manager.add(interest_points_tab)
+        self.interest_points_tab = Tab(self)
+        self.ui_manager.add(self.interest_points_tab)
 
         self.recreate_interest_points()
         self.prepare_deliverers()
@@ -117,10 +142,11 @@ class SimulationView(CoreSimulationView):
 
     def on_update(self, delta_time: float) -> None:
         for point in self.interest_points:
-            point.on_update()
-            point.zone.on_update()
+            point.on_update(delta_time)
+            point.zone.on_update(delta_time)
 
         for deliverer in self.deliverers:
             deliverer.on_update(delta_time)
 
+        self.change_deliverers_amount()
         self.physics_engine.step(delta_time)

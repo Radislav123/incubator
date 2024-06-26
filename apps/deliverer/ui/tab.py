@@ -51,15 +51,20 @@ class FigureLabel(TabLabel):
 
 class FigureAngleLabel(TabLabel):
     def update_text(self) -> None:
-        self.text = f"Угол: {self.tab.view.figure_angle_new}"
+        self.text = f"Угол фигуры: {self.tab.view.figure_angle_new}"
 
 
-class AmountLabel(TabLabel):
+class InterestPointsAmountLabel(TabLabel):
     def update_text(self) -> None:
-        self.text = f"Количество: {self.tab.view.interest_points_amount}"
+        self.text = f"Количество точек: {self.tab.view.interest_points_amount}"
 
 
-class RadiusLabel(TabLabel):
+class DeliverersAmountLabel(TabLabel):
+    def update_text(self) -> None:
+        self.text = f"Количество курьеров: {len(self.tab.view.deliverers)}/{int(self.tab.deliverers_amount_slider.value)}"
+
+
+class DelivererRadiusLabel(TabLabel):
     def update_text(self) -> None:
         self.text = f"Радиус курьера: {Deliverer.radius}"
 
@@ -93,7 +98,7 @@ class FigureAngleSlider(TabSlider):
         self.tab.view.rotate_interest_points()
 
 
-class AmountSlider(TabSlider):
+class InterestPointsAmountSlider(TabSlider):
     default_value = 4
     default_max_value = 20
 
@@ -101,22 +106,31 @@ class AmountSlider(TabSlider):
         super().on_change(event)
         self.tab.view.interest_points_amount = int(self.value)
         self.tab.view.recreate_interest_points()
-        self.tab.amount_label.update_text()
+        self.tab.interest_points_amount_label.update_text()
 
 
-class RadiusSlider(TabSlider):
-    default_value = Deliverer.default_radius
+class DeliverersAmountSlider(TabSlider):
+    default_value = 10
+    default_max_value = 100
+
+    def on_change(self, event: UIOnChangeEvent) -> None:
+        super().on_change(event)
+        self.tab.view.deliverers_amount = int(self.value)
+        self.tab.deliverers_amount_label.update_text()
+
+
+class DelivererRadiusSlider(TabSlider):
+    default_value = 5
     default_min_value = 1
-    default_max_value = Deliverer.default_radius * 2
+    default_max_value = 10
 
     def on_change(self, event: UIOnChangeEvent) -> None:
         super().on_change(event)
         Deliverer.radius = int(self.value)
-        print(Deliverer.radius)
         for deliverer in self.tab.view.deliverers:
             deliverer.resize()
             deliverer.update_physics()
-        self.tab.radius_label.update_text()
+        self.tab.deliverer_radius_label.update_text()
 
 
 class Tab(BoxLayout):
@@ -125,22 +139,29 @@ class Tab(BoxLayout):
     def __init__(self, view: "SimulationView", **kwargs) -> None:
         self.view = view
 
-        figure_slider = FigureSlider(self)
         self.score_label = ScoreLabel(self)
+        self.figure_slider = FigureSlider(self)
         self.figure_label = FigureLabel(self)
+        self.figure_angle_slider = FigureAngleSlider(self)
         self.figure_angle_label = FigureAngleLabel(self)
-        self.amount_label = AmountLabel(self)
-        self.radius_label = RadiusLabel(self)
+        self.interest_points_amount_slider = InterestPointsAmountSlider(self)
+        self.interest_points_amount_label = InterestPointsAmountLabel(self)
+        self.deliverers_amount_slider = DeliverersAmountSlider(self)
+        self.deliverers_amount_label = DeliverersAmountLabel(self)
+        self.deliverer_radius_slider = DelivererRadiusSlider(self)
+        self.deliverer_radius_label = DelivererRadiusLabel(self)
         children = [
             self.score_label,
             self.figure_label,
-            figure_slider,
+            self.figure_slider,
             self.figure_angle_label,
-            FigureAngleSlider(self),
-            self.amount_label,
-            AmountSlider(self),
-            self.radius_label,
-            RadiusSlider(self)
+            self.figure_angle_slider,
+            self.interest_points_amount_label,
+            self.interest_points_amount_slider,
+            self.deliverers_amount_label,
+            self.deliverers_amount_slider,
+            self.deliverer_radius_label,
+            self.deliverer_radius_slider,
         ]
 
         super().__init__(children = children, **kwargs)
