@@ -30,6 +30,8 @@ class Deliverer(Sprite):
     default_power = 2000
     power = default_power
 
+    min_points_amount = 2
+
     def __init__(self, view: "SimulationView", **kwargs) -> None:
         self.view = view
         self.departure: int | None = None
@@ -53,17 +55,23 @@ class Deliverer(Sprite):
         self.update_physics()
         self.distances_cache: dict[position, Distances] = {}
 
+    def resize(self) -> None:
+        scale = self.radius / sum(self.texture.size) * 4
+        if scale != self.scale:
+            self.scale = scale
+
     def update_physics(self) -> None:
         if self.physics_engines:
             self.view.physics_engine.remove_sprite(self)
+            velocity = self.physics_body.velocity
+        else:
+            velocity = None
 
         self.view.physics_engine.add_sprite(self, self.default_mass)
         self.physics_body = self.view.physics_engine.get_physics_object(self).body
         self.physics_body.velocity_func = self.velocity_callback
-
-    def resize(self) -> None:
-        scale = self.radius / sum(self.texture.size) * 4
-        self.scale = scale
+        if velocity is not None:
+            self.physics_body.velocity = velocity
 
     # оригинал описан в PymunkPhysicsEngine.add_sprite
     def velocity_callback(
@@ -101,30 +109,33 @@ class Deliverer(Sprite):
         return self.distances_cache[rounded_position]
 
     def choose_departure(self) -> None:
-        max_size = max(x.size for x in self.view.interest_points)
+        if len(self.view.interest_points) >= self.min_points_amount:
+            sizes = [x.size for x in self.view.interest_points]
+            min_size = min(sizes)
 
-        departures = list(range(len(self.view.interest_points)))
-        # + 1 - чтобы все веса не были нулевыми, так как это приводит к исключению
-        weights = [max_size - x.size + 1 for x in self.view.interest_points]
+            departures = list(range(len(self.view.interest_points)))
+            # + 1 - чтобы сумма весов не была нулевой, так как это приводит к исключению
+            weights = [-(min_size - x) + 1 for x in sizes]
 
-        if len(departures) > 0:
             self.departure = random.choices(departures, weights)[0]
         else:
             self.departure = None
 
     def choose_destination(self) -> None:
-        max_size = max(x.size for x in self.view.interest_points)
+        if len(self.view.interest_points) >= self.min_points_amount:
+            sizes = [x.size for x in self.view.interest_points]
+            max_size = max(sizes)
 
-        destinations = list(range(len(self.view.interest_points)))
-        # + 1 - чтобы все веса не были нулевыми, так как это приводит к исключению
-        weights = [max_size - x.size + 1 for x in self.view.interest_points]
+            destinations = list(range(len(self.view.interest_points)))
+            # + 1 - чтобы сумма весов не была нулевой, так как это приводит к исключению
+            weights = [max_size - x + 1 for x in sizes]
 
-        # нет смысла перемещать груз в ту же точку
-        destinations.remove(self.departure)
-        weights = weights[:self.departure] + weights[self.departure + 1:]
+            # нет смысла перемещать груз в ту же точку
+            if self.departure is not None:
+                destinations.remove(self.departure)
+                weights = weights[:self.departure] + weights[self.departure + 1:]
 
-        if len(destinations) > 0:
-            self.destination = random.choices(destinations, weights)[0]
+                self.destination = random.choices(destinations, weights)[0]
         else:
             self.destination = None
 
@@ -144,7 +155,18 @@ class Deliverer(Sprite):
         self.physics_body.mass -= cargo
         self.cargo -= cargo
 
+        self.view.score += cargo
         self.color = Color.DELIVERER_UNLOADED
+
+    def return_cargo(self) -> None:
+        # возвращение недоставленного груза
+        if self.departure is not None and len(self.view.interest_points) > self.departure:
+            self.view.interest_points[self.departure].size += self.cargo
+        # точка отправления отсутствует, и груз возвращается в случайную точку
+        else:
+            point = random.randint(0, len(self.view.interest_points) - 1)
+            self.view.interest_points[point].size += self.cargo
+        self.cargo = 0
 
     def apply_power(self, delta_time: float) -> None:
         point = self.view.interest_points[self.next_point]
@@ -213,13 +235,10 @@ class Deliverer(Sprite):
                 adding_velocity_x += dumping_velocity_x
                 adding_velocity_y += dumping_velocity_y
 
-            self.physics_body.velocity = (
-                self.physics_body.velocity[0] + adding_velocity_x,
-                self.physics_body.velocity[1] + adding_velocity_y
-            )
+            self.physics_body.velocity = (velocity[0] + adding_velocity_x, velocity[1] + adding_velocity_y)
 
     def update_angle(self) -> None:
-        if self.next_point is not None:
+        if self.next_point is not None and len(self.view.interest_points) > self.next_point:
             point = self.view.interest_points[self.next_point]
             vector = (point.center_x - self.center_x, point.center_y - self.center_y)
             axis = (1, 0)
@@ -235,27 +254,52 @@ class Deliverer(Sprite):
                     angle = math.pi * 2 - angle
                 self.physics_body.angle = angle
 
+    def dump_velocity(self, delta_time: float) -> None:
+        velocity = self.physics_body.velocity
+        velocity_len = math.dist(velocity, (0, 0))
+        dumping_coeff = 0.1
+
+        dumping_velocity = (2 * self.power * delta_time / self.physics_body.mass)**(1 / 2) * dumping_coeff
+        dumping_velocity_x = dumping_velocity / velocity_len * -velocity[0]
+        dumping_velocity_y = dumping_velocity / velocity_len * -velocity[1]
+
+        self.physics_body.velocity = (velocity[0] + dumping_velocity_x, velocity[1] + dumping_velocity_y)
+
     # noinspection PyMethodOverriding
     def on_update(self, delta_time: float) -> None:
-        if self.departure is None:
+        if self.next_point is None:
             self.choose_departure()
             self.choose_destination()
             self.next_point = self.departure
 
-        # noinspection PyTypeChecker
-        point: InterestPoint = self.view.interest_points[self.next_point]
-        if self.collides_with_sprite(point.zone):
-            if self.next_point == self.departure:
-                self.load_cargo()
-                self.next_point = self.destination
-            elif self.next_point == self.destination:
-                self.unload_cargo()
-                self.departure = None
-                self.destination = None
-                self.next_point = None
+        # точка отправления была удалена
+        departure_removed = self.departure is not None and len(self.view.interest_points) <= self.departure
+        # точка назначения была удалена
+        destination_removed = self.destination is not None and len(self.view.interest_points) <= self.destination
+        if departure_removed or destination_removed:
+            self.return_cargo()
+            self.color = Color.DELIVERER_UNLOADED
+
+            self.departure = None
+            self.destination = None
+            self.next_point = None
+
+        if self.next_point is not None:
+            point: InterestPoint = self.view.interest_points[self.next_point]
+            if self.collides_with_sprite(point.zone):
+                if self.next_point == self.departure:
+                    self.load_cargo()
+                    self.next_point = self.destination
+                elif self.next_point == self.destination:
+                    self.unload_cargo()
+                    self.departure = None
+                    self.destination = None
+                    self.next_point = None
+                else:
+                    raise ValueError(f"Unknown next point: {self.next_point}")
             else:
-                raise ValueError(f"Unknown next point: {self.next_point}")
+                self.apply_power(delta_time)
         else:
-            self.apply_power(delta_time)
+            self.dump_velocity(delta_time)
 
         self.distances_cache = {}

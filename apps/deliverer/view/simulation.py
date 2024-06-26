@@ -75,7 +75,8 @@ class SimulationView(CoreSimulationView):
 
             if self.interest_points_amount > 0:
                 sizes = [0 for _ in range(self.interest_points_amount)]
-                for potion in range(self.interest_points_amount * InterestPoint.default_size):
+                loaded_cargo = sum(x.cargo for x in self.deliverers)
+                for potion in range(self.interest_points_amount * InterestPoint.default_size - loaded_cargo):
                     sizes[random.randint(0, self.interest_points_amount - 1)] += 1
 
                 for index, (x, y) in enumerate(self.figure_new.get_walk_around_points(self.interest_points_amount)):
@@ -93,9 +94,9 @@ class SimulationView(CoreSimulationView):
         deliverer = Deliverer(self)
         self.deliverers.append(deliverer)
 
-    def remove_deliverer(self, deliverer: Deliverer) -> None:
-        # возвращение недоставленного груза
-        self.interest_points[deliverer.departure].size += deliverer.cargo
+    @staticmethod
+    def remove_deliverer(deliverer: Deliverer) -> None:
+        deliverer.return_cargo()
         deliverer.remove_from_sprite_lists()
 
     def prepare_deliverers(self) -> None:
@@ -141,6 +142,8 @@ class SimulationView(CoreSimulationView):
         self.deliverers.draw()
         for deliverer in self.deliverers:
             deliverer.update_angle()
+
+        self.interest_points_tab.score_label.update_text()
 
     def on_update(self, delta_time: float) -> None:
         # физика ломается при слишком крупных промежутках времени

@@ -23,6 +23,8 @@ class InterestPoint(Sprite):
     default_size = 100
     radius = 10
     zone_size_coeff = 5
+    # в секундах
+    resize_period = 1
 
     def __init__(self, view: "SimulationView", center_x: float, center_y: float, size: int, **kwargs) -> None:
         self.view = view
@@ -36,13 +38,35 @@ class InterestPoint(Sprite):
         self.zone = InterestPointZone(zone_texture, 1, center_x, center_y, **kwargs)
 
         self.resize()
-        self.view.physics_engine.add_sprite(self, self.size, body_type = PymunkPhysicsEngine.KINEMATIC)
-        self.physics_body = self.view.physics_engine.get_physics_object(self).body
+        self.update_physics()
+        self.resize_timer = 0
 
     def __repr__(self) -> str:
         return f"InterestPoint{self.position}"
 
-    def resize(self) -> None:
+    def resize(self) -> bool:
         scale = self.size / self.default_size
-        self.scale = scale
-        self.zone.scale = scale
+
+        if scale != self.scale:
+            self.scale = scale
+            self.zone.scale = scale
+            resized = True
+        else:
+            resized = False
+
+        return resized
+
+    def update_physics(self) -> None:
+        if self.physics_engines:
+            self.view.physics_engine.remove_sprite(self)
+
+        self.view.physics_engine.add_sprite(self, self.size, body_type = PymunkPhysicsEngine.KINEMATIC)
+        self.physics_body = self.view.physics_engine.get_physics_object(self).body
+
+    # noinspection PyMethodOverriding
+    def on_update(self, delta_time) -> None:
+        resized = self.resize()
+        self.resize_timer += delta_time
+        if resized and self.resize_timer > self.resize_period:
+            self.update_physics()
+            self.resize_timer = 0

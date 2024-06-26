@@ -41,7 +41,9 @@ class TabSlider(StepSlider):
 
 class ScoreLabel(TabLabel):
     def update_text(self) -> None:
-        self.text = str(self.tab.view.score)
+        text = f"Перемещено грузов: {self.tab.view.score}"
+        if self.text != text:
+            self.text = text
 
 
 class FigureLabel(TabLabel):
