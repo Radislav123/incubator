@@ -22,6 +22,7 @@ class InterestPoint(Sprite):
 
     default_size = 100
     radius = 10
+    zone_size_coeff = 5
 
     def __init__(self, view: "SimulationView", center_x: float, center_y: float, size: int, **kwargs) -> None:
         self.view = view
@@ -30,7 +31,7 @@ class InterestPoint(Sprite):
         texture = Texture.create_circle(self.radius, 2, color = Color.INTEREST_POINT)
         super().__init__(texture, 1, center_x, center_y, **kwargs)
 
-        zone_radius = self.radius * 3
+        zone_radius = self.radius * self.zone_size_coeff
         zone_texture = Texture.create_circle(zone_radius, 1, color = Color.INTEREST_POINT_ZONE)
         self.zone = InterestPointZone(zone_texture, 1, center_x, center_y, **kwargs)
 

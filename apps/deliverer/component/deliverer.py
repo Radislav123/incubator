@@ -121,12 +121,14 @@ class Deliverer(Sprite):
 
         velocity = self.physics_body.velocity
         velocity_projection = (abs(velocity[0]) * abs(distance_x) + abs(velocity[1]) * abs(distance_y)) / distance
-        velocity_signs = [math.copysign(1, velocity[x]) for x in range(2)]
-        distance_signs = [math.copysign(1, point.position[x] - self.position[x]) for x in range(2)]
-        approach = velocity_signs[0] == distance_signs[0] or velocity_signs[1] == distance_signs[1]
+        velocity_cos = (velocity[0] * distance_x + velocity[1] * distance_y) / math.dist(velocity, (0, 0)) / distance
+        # ошибки округления дают cos > 1 и cos < -1
+        velocity_cos = max(min(velocity_cos, 1), -1)
+        angle = math.acos(velocity_cos)
 
+        angle_threshold = math.pi / 3
         # доставщик приближается к точке
-        if approach:
+        if angle < angle_threshold:
             estimated_time = distance / velocity_projection
         # доставщик отдаляется от точки
         else:
@@ -168,8 +170,9 @@ class Deliverer(Sprite):
         axis_length = 1
 
         distance_x, distance_y, distance_square, distance = self.count_distances(point.position)
+        cos = (vector[0] * axis[0] + vector[1] * axis[1]) / distance / axis_length
         # ошибки округления дают cos > 1 и cos < -1
-        cos = max(min((vector[0] * axis[0] + vector[1] * axis[1]) / distance / axis_length, 1), -1)
+        cos = max(min(cos, 1), -1)
         angle = math.acos(cos)
         if distance_y < 0:
             angle = math.pi * 2 - angle
@@ -177,13 +180,7 @@ class Deliverer(Sprite):
 
     # noinspection PyMethodOverriding
     def on_update(self, delta_time: float) -> None:
-        # todo: remove temp
-        if not hasattr(self, "temp"):
-            self.temp = 0
-        self.temp += delta_time
         if self.destination is not None:
-            if self.temp > 1:
-                print(self.view.interest_points[self.destination].position, self.position)
             self.update_angle()
             if self.collides_with_sprite(self.view.interest_point_zones[self.destination]):
                 self.unload_cargo()
@@ -196,5 +193,3 @@ class Deliverer(Sprite):
             self.load_cargo()
 
         self.distances_cache = {}
-        if self.temp > 1:
-            self.temp -= 1
