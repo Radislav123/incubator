@@ -143,6 +143,9 @@ class SimulationView(CoreSimulationView):
             deliverer.update_angle()
 
     def on_update(self, delta_time: float) -> None:
+        # физика ломается при слишком крупных промежутках времени
+        delta_time = min(delta_time, 0.2)
+
         for point in self.interest_points:
             point.on_update(delta_time)
             point.zone.on_update(delta_time)

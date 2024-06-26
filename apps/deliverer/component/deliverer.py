@@ -104,7 +104,8 @@ class Deliverer(Sprite):
         max_size = max(x.size for x in self.view.interest_points)
 
         departures = list(range(len(self.view.interest_points)))
-        weights = [max_size - x.size for x in self.view.interest_points]
+        # + 1 - чтобы все веса не были нулевыми, так как это приводит к исключению
+        weights = [max_size - x.size + 1 for x in self.view.interest_points]
 
         if len(departures) > 0:
             self.departure = random.choices(departures, weights)[0]
@@ -115,7 +116,8 @@ class Deliverer(Sprite):
         max_size = max(x.size for x in self.view.interest_points)
 
         destinations = list(range(len(self.view.interest_points)))
-        weights = [max_size - x.size for x in self.view.interest_points]
+        # + 1 - чтобы все веса не были нулевыми, так как это приводит к исключению
+        weights = [max_size - x.size + 1 for x in self.view.interest_points]
 
         # нет смысла перемещать груз в ту же точку
         destinations.remove(self.departure)
