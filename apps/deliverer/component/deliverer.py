@@ -9,7 +9,6 @@ from arcade import Sprite
 
 from apps.deliverer.component.interest_point import InterestPoint
 from apps.deliverer.settings import Settings
-from apps.deliverer.ui.tab import DelivererRadiusSlider
 from core.texture import Texture
 
 
@@ -24,9 +23,9 @@ class Deliverer(Sprite):
     settings = Settings()
     physics_body: pymunk.Body
 
-    radius = DelivererRadiusSlider.default_value
+    default_radius = 5
+    radius = default_radius
     default_mass = 10
-    # todo: вынести в параметры
     default_power = 2000
     power = default_power
 
@@ -43,7 +42,7 @@ class Deliverer(Sprite):
         position = list(self.view.interest_points[self.departure].position)
         angle = random.random() * math.pi * 2
         coeff = 1.5
-        distance = (InterestPoint.radius + self.radius) * coeff
+        distance = max(InterestPoint.radius, self.radius) * 2 * coeff
         position[0] = position[0] + distance * math.cos(angle)
         position[1] = position[1] + distance * math.sin(angle)
         super().__init__(texture, 1, position[0], position[1], angle, **kwargs)
@@ -172,7 +171,6 @@ class Deliverer(Sprite):
 
             # проверка на то, что доставщик движется по орбите
             move_in_orbit = math.pi * 1 / 3 < angle < math.pi * 2 / 3
-            # todo: вынести в параметры
             min_anti_orbit_power = 0.1
             # запасается мощность для орбитального торможения, если для разгона используется вся
             if move_in_orbit and abs(acceleration_coeff) > 1 - min_anti_orbit_power:

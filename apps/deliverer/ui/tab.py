@@ -69,6 +69,11 @@ class DelivererRadiusLabel(TabLabel):
         self.text = f"Радиус курьера: {Deliverer.radius}"
 
 
+class DelivererPowerLabel(TabLabel):
+    def update_text(self) -> None:
+        self.text = f"Мощность курьера: {Deliverer.power}"
+
+
 class FigureSlider(TabSlider):
     default_value = 0
 
@@ -110,7 +115,7 @@ class InterestPointsAmountSlider(TabSlider):
 
 
 class DeliverersAmountSlider(TabSlider):
-    default_value = 10
+    default_value = 50
     default_max_value = 100
 
     def on_change(self, event: UIOnChangeEvent) -> None:
@@ -120,7 +125,7 @@ class DeliverersAmountSlider(TabSlider):
 
 
 class DelivererRadiusSlider(TabSlider):
-    default_value = 5
+    default_value = Deliverer.default_radius
     default_min_value = 1
     default_max_value = 10
 
@@ -131,6 +136,18 @@ class DelivererRadiusSlider(TabSlider):
             deliverer.resize()
             deliverer.update_physics()
         self.tab.deliverer_radius_label.update_text()
+
+
+class DelivererPowerSlider(TabSlider):
+    default_step = 100
+    default_value = Deliverer.default_power
+    default_min_value = 100
+    default_max_value = 5000
+
+    def on_change(self, event: UIOnChangeEvent) -> None:
+        super().on_change(event)
+        Deliverer.power = int(self.value)
+        self.tab.deliverer_power_label.update_text()
 
 
 class Tab(BoxLayout):
@@ -150,6 +167,8 @@ class Tab(BoxLayout):
         self.deliverers_amount_label = DeliverersAmountLabel(self)
         self.deliverer_radius_slider = DelivererRadiusSlider(self)
         self.deliverer_radius_label = DelivererRadiusLabel(self)
+        self.deliverer_power_slider = DelivererPowerSlider(self)
+        self.deliverer_power_label = DelivererPowerLabel(self)
         children = [
             self.score_label,
             self.figure_label,
@@ -162,6 +181,8 @@ class Tab(BoxLayout):
             self.deliverers_amount_slider,
             self.deliverer_radius_label,
             self.deliverer_radius_slider,
+            self.deliverer_power_label,
+            self.deliverer_power_slider,
         ]
 
         super().__init__(children = children, **kwargs)
