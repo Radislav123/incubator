@@ -45,7 +45,7 @@ class ScoreLabel(TabLabel):
 
 class FigureLabel(TabLabel):
     def update_text(self) -> None:
-        self.text = self.tab.view.figure.name_rus
+        self.text = self.tab.view.figure_new.name_rus
 
 
 class FigureAngleLabel(TabLabel):
@@ -67,7 +67,7 @@ class FigureSlider(TabSlider):
         self.set_figure()
 
     def set_figure(self) -> None:
-        self.tab.view.figure = self.tab.view.figures[int(self.value)]
+        self.tab.view.figure_new = self.tab.view.figures[int(self.value)]
 
     def on_change(self, event: UIOnChangeEvent) -> None:
         super().on_change(event)
@@ -93,7 +93,7 @@ class AmountSlider(TabSlider):
 
     def on_change(self, event: UIOnChangeEvent) -> None:
         super().on_change(event)
-        self.tab.view.interest_points_amount = self.value
+        self.tab.view.interest_points_amount = int(self.value)
         self.tab.view.recreate_interest_points()
         self.tab.amount_label.update_text()
 
