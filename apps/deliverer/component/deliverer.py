@@ -121,7 +121,8 @@ class Deliverer(Sprite):
 
         velocity = self.physics_body.velocity
         velocity_projection = (abs(velocity[0]) * abs(distance_x) + abs(velocity[1]) * abs(distance_y)) / distance
-        velocity_cos = (velocity[0] * distance_x + velocity[1] * distance_y) / math.dist(velocity, (0, 0)) / distance
+        velocity_len = math.dist(velocity, (0, 0))
+        velocity_cos = (velocity[0] * distance_x + velocity[1] * distance_y) / velocity_len / distance
         # ошибки округления дают cos > 1 и cos < -1
         velocity_cos = max(min(velocity_cos, 1), -1)
         angle = math.acos(velocity_cos)
@@ -155,9 +156,30 @@ class Deliverer(Sprite):
         else:
             acceleration_coeff = -1 * dumping_coeff
 
-        adding_velocity = (2 * self.power * delta_time / self.physics_body.mass)**(1 / 2)
-        adding_velocity_x = adding_velocity / distance * distance_x * acceleration_coeff
-        adding_velocity_y = adding_velocity / distance * distance_y * acceleration_coeff
+        acceleration_power = self.power * abs(acceleration_coeff)
+
+        # проверка на то, что доставщик движется по орбите
+        move_in_orbit = math.pi * 1 / 3 < angle < math.pi * 2 / 3
+        min_anti_orbit_power = 0.1
+        # запасается мощность для орбитального торможения, если для разгона используется вся
+        if move_in_orbit and abs(acceleration_coeff) > 1 - min_anti_orbit_power:
+            acceleration_power *= 1 - min_anti_orbit_power
+
+        adding_velocity = ((2 * acceleration_power * delta_time / self.physics_body.mass)**(1 / 2) *
+                           math.copysign(1, acceleration_power))
+        adding_velocity_x = adding_velocity / distance * distance_x
+        adding_velocity_y = adding_velocity / distance * distance_y
+
+        # орбитальное торможение
+        if move_in_orbit:
+            remaining_power = self.power - acceleration_power
+            dumping_velocity = (2 * remaining_power * delta_time / self.physics_body.mass)**(1 / 2)
+            dumping_velocity_x = dumping_velocity / velocity_len * -velocity[0]
+            dumping_velocity_y = dumping_velocity / velocity_len * -velocity[1]
+
+            adding_velocity_x = dumping_velocity_x
+            adding_velocity_y = dumping_velocity_y
+
         self.physics_body.velocity = (
             self.physics_body.velocity[0] + adding_velocity_x,
             self.physics_body.velocity[1] + adding_velocity_y
