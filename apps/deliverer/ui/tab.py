@@ -155,7 +155,7 @@ class InterestPointsAmountSlider(TabSlider):
 
 class DeliverersAmountSlider(TabSlider):
     default_value = 50
-    default_max_value = 100
+    default_max_value = 200
 
     def on_change(self, event: UIOnChangeEvent) -> None:
         super().on_change(event)
@@ -181,7 +181,7 @@ class DelivererPowerSlider(TabSlider):
     default_step = 100
     default_value = Deliverer.default_power
     default_min_value = 100
-    default_max_value = 5000
+    default_max_value = 10000
 
     def on_change(self, event: UIOnChangeEvent) -> None:
         super().on_change(event)
