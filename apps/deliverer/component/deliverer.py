@@ -22,7 +22,7 @@ Position = tuple[float, float]
 
 class Deliverer(Sprite):
     settings = Settings()
-    physics_body: pymunk.Body
+    physics_body: pymunk.Body | None = None
 
     default_radius = 5
     radius = default_radius
@@ -30,7 +30,6 @@ class Deliverer(Sprite):
     default_power = 2000
     power = default_power
 
-    # todo: вынести в параметры
     default_max_cargo = 5
     max_cargo = default_max_cargo
     min_points_amount = 2
@@ -62,13 +61,17 @@ class Deliverer(Sprite):
             self.scale = scale
 
     def update_physics(self) -> None:
-        if self.physics_engines:
+        if len(self.physics_engines) > 0:
             self.view.physics_engine.remove_sprite(self)
             velocity = self.physics_body.velocity
+            mass = self.physics_body.mass
+            self.physics_body = None
+            self.physics_engines.clear()
         else:
             velocity = None
+            mass = self.default_mass
 
-        self.view.physics_engine.add_sprite(self, self.default_mass)
+        self.view.physics_engine.add_sprite(self, mass)
         self.physics_body = self.view.physics_engine.get_physics_object(self).body
         self.physics_body.velocity_func = self.velocity_callback
         if velocity is not None:
@@ -143,7 +146,7 @@ class Deliverer(Sprite):
     def update_color(self) -> None:
         if self.cargo == 0:
             self.color = Color.DELIVERER_UNLOADED
-        elif self.cargo == self.max_cargo:
+        elif self.cargo >= self.max_cargo:
             self.color = Color.DELIVERER_LOADED
         else:
             self.color = Color.DELIVERER_SEMI_LOADED
@@ -188,8 +191,13 @@ class Deliverer(Sprite):
         point = self.view.interest_points[self.next_point]
 
         distance_x, distance_y, distance_square, distance = self.count_distances(point.position)
-        velocity = self.physics_body.velocity
-        velocity_projection = (abs(velocity[0]) * abs(distance_x) + abs(velocity[1]) * abs(distance_y)) / distance
+        # абсолютная скорость перед началом расчетов
+        abs_velocity = self.physics_body.velocity
+        # скорость с учетом вращения точки вокруг центра фигуры
+        # todo: прописать линейную скорость
+        arc_velocity = (0, 0)
+        velocity = (abs_velocity[0] + arc_velocity[0], abs_velocity[1] + arc_velocity[1])
+        velocity_projection = (abs(velocity[0] * distance_x) + abs(velocity[1] * distance_y)) / distance
         velocity_len = math.dist(velocity, (0, 0))
 
         if distance != 0 and velocity_len != 0:
@@ -230,7 +238,8 @@ class Deliverer(Sprite):
             acceleration_power = self.power * abs(acceleration_coeff)
 
             # проверка на то, что доставщик движется по орбите
-            move_in_orbit = math.pi * 1 / 3 < angle < math.pi * 2 / 3
+            angle_offset = math.pi * 1 / 6
+            move_in_orbit = math.pi * 1 / 2 - angle_offset < angle < math.pi * 1 / 2 + angle_offset
             min_anti_orbit_power = 0.1
             # запасается мощность для орбитального торможения, если для разгона используется вся
             if move_in_orbit and abs(acceleration_coeff) > 1 - min_anti_orbit_power:
@@ -241,7 +250,7 @@ class Deliverer(Sprite):
             adding_velocity_x = adding_velocity / distance * distance_x
             adding_velocity_y = adding_velocity / distance * distance_y
 
-            # орбитальное торможение
+            # орбитальное торможение (уменьшается текущая скорость, относительно точки)
             if move_in_orbit:
                 remaining_power = self.power - acceleration_power
                 dumping_velocity = (2 * remaining_power * delta_time / self.physics_body.mass)**(1 / 2)
@@ -251,24 +260,32 @@ class Deliverer(Sprite):
                 adding_velocity_x += dumping_velocity_x
                 adding_velocity_y += dumping_velocity_y
 
-            self.physics_body.velocity = (velocity[0] + adding_velocity_x, velocity[1] + adding_velocity_y)
+            self.physics_body.velocity = (abs_velocity[0] + adding_velocity_x, abs_velocity[1] + adding_velocity_y)
+
+    @staticmethod
+    def get_angle(vector_0: Position, vector_1: Position) -> float:
+        vector_0_len = math.dist(vector_0, (0, 0))
+        vector_1_len = math.dist(vector_1, (0, 0))
+
+        cos = (vector_0[0] * vector_1[0] + vector_0[1] * vector_1[1]) / vector_1_len / vector_0_len
+        # ошибки округления дают cos > 1 и cos < -1
+        cos = max(min(cos, 1), -1)
+        angle = math.acos(cos)
+
+        if vector_1[1] - vector_0[1] < 0:
+            angle = math.pi * 2 - angle
+
+        return angle
 
     def update_angle(self) -> None:
         if self.next_point is not None and len(self.view.interest_points) > self.next_point:
             point = self.view.interest_points[self.next_point]
             vector = (point.center_x - self.center_x, point.center_y - self.center_y)
             axis = (1, 0)
-            axis_length = 1
 
             distance_x, distance_y, distance_square, distance = self.count_distances(point.position)
             if distance != 0:
-                cos = (vector[0] * axis[0] + vector[1] * axis[1]) / distance / axis_length
-                # ошибки округления дают cos > 1 и cos < -1
-                cos = max(min(cos, 1), -1)
-                angle = math.acos(cos)
-                if distance_y < 0:
-                    angle = math.pi * 2 - angle
-                self.physics_body.angle = angle
+                self.physics_body.angle = self.get_angle(vector, axis)
 
     def dump_velocity(self, delta_time: float) -> None:
         velocity = self.physics_body.velocity

@@ -6,7 +6,8 @@ from arcade import PymunkPhysicsEngine, SpriteList
 from apps.deliverer.component.deliverer import Deliverer
 from apps.deliverer.component.interest_point import InterestPoint, InterestPointZone
 from apps.deliverer.settings import Settings
-from apps.deliverer.ui.tab import DeliverersAmountSlider, FigureAngleSlider, InterestPointsAmountSlider, Tab
+from apps.deliverer.ui.tab import DeliverersAmountSlider, FigureAngleSlider, FigureRotationSpeedSlider, \
+    InterestPointsAmountSlider, Tab
 from core.service.figure import Circle, Ellipse, Figure
 from core.view.simulation import SimulationView as CoreSimulationView
 
@@ -23,12 +24,15 @@ class SimulationView(CoreSimulationView):
     figure_new: Figure = None
     figure_angle_old: int | None = None
     figure_angle_new: int | None = None
+    figure_rotation_timer: float
+    figure_rotation_speed = FigureRotationSpeedSlider.default_value - FigureRotationSpeedSlider.offset
+    figure_rotation_period = 0.01
     figure_center_x: int
     figure_center_y: int
 
     interest_points_amount = InterestPointsAmountSlider.default_value
-    interest_points: SpriteList[InterestPoint] = SpriteList[InterestPoint](True)
-    interest_point_zones: SpriteList[InterestPointZone] = SpriteList[InterestPointZone](True)
+    interest_points: SpriteList[InterestPoint] = SpriteList[InterestPoint]()
+    interest_point_zones: SpriteList[InterestPointZone] = SpriteList[InterestPointZone]()
 
     deliverers_amount = DeliverersAmountSlider.default_value
     deliverers = SpriteList[Deliverer]()
@@ -41,6 +45,7 @@ class SimulationView(CoreSimulationView):
         self.figure_center_y = int(self.window.center_y)
         self.figure_angle_old = 0
         self.figure_angle_new = FigureAngleSlider.default_value
+        self.figure_rotation_timer = 0
 
         center = (self.figure_center_x, self.figure_center_y)
         self.figures = [
@@ -144,10 +149,21 @@ class SimulationView(CoreSimulationView):
             deliverer.update_angle()
 
         self.interest_points_tab.score_label.update_text()
+        self.interest_points_tab.figure_angle_label.update_text()
 
     def on_update(self, delta_time: float) -> None:
         # физика ломается при слишком крупных промежутках времени
         delta_time = min(delta_time, 0.2)
+
+        if self.figure_rotation_speed != 0:
+            self.figure_rotation_timer += delta_time
+            if self.figure_rotation_timer > self.figure_rotation_period:
+                self.figure_angle_new = ((self.figure_angle_new + self.figure_rotation_speed *
+                                          self.figure_rotation_timer) %
+                                         self.interest_points_tab.figure_angle_slider.max_value)
+                self.interest_points_tab.figure_angle_slider.value = int(self.figure_angle_new)
+                self.rotate_interest_points()
+                self.figure_rotation_timer = 0
 
         for point in self.interest_points:
             point.on_update(delta_time)

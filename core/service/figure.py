@@ -22,6 +22,10 @@ class Figure:
         self.center_y = center_y
         self.resolution = resolution
 
+    @property
+    def center(self) -> tuple[float, float]:
+        return self.center_x, self.center_y
+
     def calculate(self) -> None:
         self.points = {}
         for x in float_range(self.x_bounds[0], self.x_bounds[1], self.resolution):

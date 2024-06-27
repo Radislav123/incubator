@@ -48,32 +48,56 @@ class ScoreLabel(TabLabel):
 
 class FigureLabel(TabLabel):
     def update_text(self) -> None:
-        self.text = self.tab.view.figure_new.name_rus
+        text = self.tab.view.figure_new.name_rus
+        if self.text != text:
+            self.text = text
 
 
 class FigureAngleLabel(TabLabel):
     def update_text(self) -> None:
-        self.text = f"Угол фигуры: {self.tab.view.figure_angle_new}"
+        text = f"Угол фигуры: {int(self.tab.view.figure_angle_new)}°"
+        if self.text != text:
+            self.text = text
+
+
+class FigureRotationSpeedLabel(TabLabel):
+    def update_text(self) -> None:
+        text = f"Изменение угла фигуры: {self.tab.view.figure_rotation_speed}°/с"
+        if self.text != text:
+            self.text = text
 
 
 class InterestPointsAmountLabel(TabLabel):
     def update_text(self) -> None:
-        self.text = f"Количество точек: {self.tab.view.interest_points_amount}"
+        text = f"Количество точек: {self.tab.view.interest_points_amount}"
+        if self.text != text:
+            self.text = text
 
 
 class DeliverersAmountLabel(TabLabel):
     def update_text(self) -> None:
-        self.text = f"Количество курьеров: {len(self.tab.view.deliverers)}/{int(self.tab.deliverers_amount_slider.value)}"
+        text = f"Количество курьеров: {len(self.tab.view.deliverers)}/{int(self.tab.deliverers_amount_slider.value)}"
+        if self.text != text:
+            self.text = text
 
 
 class DelivererRadiusLabel(TabLabel):
     def update_text(self) -> None:
-        self.text = f"Радиус курьера: {Deliverer.radius}"
+        text = f"Радиус курьера: {Deliverer.radius}"
+        if self.text != text:
+            self.text = text
 
 
 class DelivererPowerLabel(TabLabel):
     def update_text(self) -> None:
-        self.text = f"Мощность курьера: {Deliverer.power}"
+        text = f"Мощность курьера: {Deliverer.power}"
+        if self.text != text:
+            self.text = text
+
+
+class DelivererMaxCargoLabel(TabLabel):
+    def update_text(self) -> None:
+        self.text = f"Грузоподъемность: {Deliverer.max_cargo}"
 
 
 class FigureSlider(TabSlider):
@@ -101,8 +125,21 @@ class FigureAngleSlider(TabSlider):
     def on_change(self, event: UIOnChangeEvent) -> None:
         super().on_change(event)
         self.tab.view.figure_angle_new = int(self.value)
-        self.tab.figure_angle_label.update_text()
+        # обновляется в SimulationView.on_draw()
+        # self.tab.figure_angle_label.update_text()
         self.tab.view.rotate_interest_points()
+
+
+class FigureRotationSpeedSlider(TabSlider):
+    default_value = 10
+    default_min_value = 0
+    default_max_value = 20
+    offset = default_value
+
+    def on_change(self, event: UIOnChangeEvent) -> None:
+        super().on_change(event)
+        self.tab.view.figure_rotation_speed = int(self.value) - self.offset
+        self.tab.figure_rotation_speed_label.update_text()
 
 
 class InterestPointsAmountSlider(TabSlider):
@@ -152,6 +189,19 @@ class DelivererPowerSlider(TabSlider):
         self.tab.deliverer_power_label.update_text()
 
 
+class DelivererMaxCargoSlider(TabSlider):
+    default_value = Deliverer.default_max_cargo
+    default_min_value = 1
+    default_max_value = 10
+
+    def on_change(self, event: UIOnChangeEvent) -> None:
+        super().on_change(event)
+        Deliverer.max_cargo = int(self.value)
+        self.tab.deliverer_max_cargo_label.update_text()
+        for deliverer in self.tab.view.deliverers:
+            deliverer.update_color()
+
+
 class Tab(BoxLayout):
     gap = 10
 
@@ -163,6 +213,8 @@ class Tab(BoxLayout):
         self.figure_label = FigureLabel(self)
         self.figure_angle_slider = FigureAngleSlider(self)
         self.figure_angle_label = FigureAngleLabel(self)
+        self.figure_rotation_speed_slider = FigureRotationSpeedSlider(self)
+        self.figure_rotation_speed_label = FigureRotationSpeedLabel(self)
         self.interest_points_amount_slider = InterestPointsAmountSlider(self)
         self.interest_points_amount_label = InterestPointsAmountLabel(self)
         self.deliverers_amount_slider = DeliverersAmountSlider(self)
@@ -171,12 +223,16 @@ class Tab(BoxLayout):
         self.deliverer_radius_label = DelivererRadiusLabel(self)
         self.deliverer_power_slider = DelivererPowerSlider(self)
         self.deliverer_power_label = DelivererPowerLabel(self)
+        self.deliverer_max_cargo_slider = DelivererMaxCargoSlider(self)
+        self.deliverer_max_cargo_label = DelivererMaxCargoLabel(self)
         children = [
             self.score_label,
             self.figure_label,
             self.figure_slider,
             self.figure_angle_label,
             self.figure_angle_slider,
+            self.figure_rotation_speed_label,
+            self.figure_rotation_speed_slider,
             self.interest_points_amount_label,
             self.interest_points_amount_slider,
             self.deliverers_amount_label,
@@ -185,6 +241,8 @@ class Tab(BoxLayout):
             self.deliverer_radius_slider,
             self.deliverer_power_label,
             self.deliverer_power_slider,
+            self.deliverer_max_cargo_label,
+            self.deliverer_max_cargo_slider,
         ]
 
         super().__init__(children = children, **kwargs)

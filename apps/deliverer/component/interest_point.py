@@ -20,7 +20,7 @@ class InterestPoint(Sprite):
     settings = Settings()
     physics_body: pymunk.Body
 
-    default_size = 100
+    default_size = 1000
     radius = 10
     zone_size_coeff = 5
     # в секундах
