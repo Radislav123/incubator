@@ -45,7 +45,16 @@ class InterestPoint(Sprite):
         return f"InterestPoint{self.position}"
 
     def resize(self) -> bool:
-        scale = self.size / self.default_size
+        min_scale = 0.7
+        max_scale = 1.5
+
+        # https://www.desmos.com/calculator/bbkja3xg2w?lang=ru
+        if self.size >= self.default_size * max_scale:
+            scale = max_scale
+        elif self.size >= self.default_size * min_scale:
+            scale = (self.size - self.default_size * min_scale) / self.default_size + min_scale
+        else:
+            scale = min_scale
 
         if scale != self.scale:
             self.scale = scale

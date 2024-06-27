@@ -30,6 +30,9 @@ class Deliverer(Sprite):
     default_power = 2000
     power = default_power
 
+    # todo: вынести в параметры
+    default_max_cargo = 5
+    max_cargo = default_max_cargo
     min_points_amount = 2
 
     def __init__(self, view: "SimulationView", **kwargs) -> None:
@@ -37,8 +40,6 @@ class Deliverer(Sprite):
         self.departure: int | None = None
         self.destination: int | None = None
         self.next_point: int | None = None
-
-        self.max_cargo = 1
         self.cargo = 0
 
         image = PIL.Image.open(f"{self.settings.IMAGES_FOLDER}/circle_0.png")
@@ -49,11 +50,11 @@ class Deliverer(Sprite):
         position[0] = position[0] + distance * math.cos(angle)
         position[1] = position[1] + distance * math.sin(angle)
         super().__init__(texture, 1, position[0], position[1], angle, **kwargs)
-        self.color = Color.DELIVERER_UNLOADED
 
+        self.distances_cache: dict[position, Distances] = {}
         self.resize()
         self.update_physics()
-        self.distances_cache: dict[position, Distances] = {}
+        self.update_color()
 
     def resize(self) -> None:
         scale = self.radius / sum(self.texture.size) * 4
@@ -139,6 +140,14 @@ class Deliverer(Sprite):
         else:
             self.destination = None
 
+    def update_color(self) -> None:
+        if self.cargo == 0:
+            self.color = Color.DELIVERER_UNLOADED
+        elif self.cargo == self.max_cargo:
+            self.color = Color.DELIVERER_LOADED
+        else:
+            self.color = Color.DELIVERER_SEMI_LOADED
+
     def load_cargo(self) -> None:
         cargo = min(self.max_cargo - self.cargo, self.view.interest_points[self.departure].size)
 
@@ -146,7 +155,10 @@ class Deliverer(Sprite):
         self.cargo += cargo
         self.physics_body.mass += cargo
 
-        self.color = Color.DELIVERER_LOADED
+        if self.cargo == self.max_cargo:
+            self.next_point = self.destination
+
+        self.update_color()
 
     def unload_cargo(self) -> None:
         cargo = self.cargo
@@ -155,8 +167,12 @@ class Deliverer(Sprite):
         self.physics_body.mass -= cargo
         self.cargo -= cargo
 
+        self.departure = None
+        self.destination = None
+        self.next_point = None
+
         self.view.score += cargo
-        self.color = Color.DELIVERER_UNLOADED
+        self.update_color()
 
     def return_cargo(self) -> None:
         # возвращение недоставленного груза
@@ -278,7 +294,7 @@ class Deliverer(Sprite):
         destination_removed = self.destination is not None and len(self.view.interest_points) <= self.destination
         if departure_removed or destination_removed:
             self.return_cargo()
-            self.color = Color.DELIVERER_UNLOADED
+            self.update_color()
 
             self.departure = None
             self.destination = None
@@ -289,12 +305,8 @@ class Deliverer(Sprite):
             if self.collides_with_sprite(point.zone):
                 if self.next_point == self.departure:
                     self.load_cargo()
-                    self.next_point = self.destination
                 elif self.next_point == self.destination:
                     self.unload_cargo()
-                    self.departure = None
-                    self.destination = None
-                    self.next_point = None
                 else:
                     raise ValueError(f"Unknown next point: {self.next_point}")
             else:
