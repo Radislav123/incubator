@@ -131,9 +131,9 @@ class FigureAngleSlider(TabSlider):
 
 
 class FigureRotationSpeedSlider(TabSlider):
-    default_value = 10
+    default_value = 20
     default_min_value = 0
-    default_max_value = 20
+    default_max_value = 40
     offset = default_value
 
     def on_change(self, event: UIOnChangeEvent) -> None:

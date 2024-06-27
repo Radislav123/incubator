@@ -193,9 +193,11 @@ class Deliverer(Sprite):
         distance_x, distance_y, distance_square, distance = self.count_distances(point.position)
         # абсолютная скорость перед началом расчетов
         abs_velocity = self.physics_body.velocity
-        # скорость с учетом вращения точки вокруг центра фигуры
-        # todo: прописать линейную скорость
-        arc_velocity = (0, 0)
+        # учет вращения точки вокруг центра фигуры
+        radius = math.dist(self.view.figure_new.center, point.position)
+        arc_velocity_projection = self.view.figure_rotation_speed * radius * math.pi / 180
+        arc_angle = self.view.figure_rotation_speed * delta_time
+        arc_velocity = (arc_velocity_projection * math.sin(arc_angle), arc_velocity_projection * math.cos(arc_angle))
         velocity = (abs_velocity[0] + arc_velocity[0], abs_velocity[1] + arc_velocity[1])
         velocity_projection = (abs(velocity[0] * distance_x) + abs(velocity[1] * distance_y)) / distance
         velocity_len = math.dist(velocity, (0, 0))
@@ -272,7 +274,7 @@ class Deliverer(Sprite):
         cos = max(min(cos, 1), -1)
         angle = math.acos(cos)
 
-        if vector_1[1] - vector_0[1] < 0:
+        if vector_0[1] - vector_1[1] < 0:
             angle = math.pi * 2 - angle
 
         return angle
