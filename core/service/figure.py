@@ -83,7 +83,7 @@ class Ellipse(ClosedFigure):
             value = 2
         return value
 
-    def get_walk_around_points(self, points_amount: int) -> list[tuple[float, float]]:
+    def get_walk_around_points(self, points_amount: int) -> list[Point]:
         step = math.pi * 2 / points_amount
         points = [(
             self.center_x + math.cos(index * step) * self.semi_major_axis,
