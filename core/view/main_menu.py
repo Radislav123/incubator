@@ -1,6 +1,7 @@
 from arcade.gui import UIBoxLayout, UIOnClickEvent
 
 from apps.clicker.view.simulation import SimulationView as ClickerSimulationView
+from apps.consumption.view.simulation import SimulationView as ConsumptionSimulationView
 from apps.deliverer.view.simulation import SimulationView as SimpleDelivererSimulationView
 from apps.gravity.view.simulation import SimulationView as GravitySimulationView
 from apps.simple_clicker.view.simulation import SimulationView as SimpleClickerSimulationView
@@ -28,7 +29,8 @@ class MainMenuView(MenuView):
             ClickerSimulationView(),
             GravitySimulationView(),
             SnakeSimulationView(),
-            SimpleDelivererSimulationView()
+            SimpleDelivererSimulationView(),
+            ConsumptionSimulationView()
         )
 
     def construct_app_buttons(self) -> None:
