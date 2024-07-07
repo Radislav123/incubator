@@ -13,6 +13,8 @@ class SettlementProjection(Sprite):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.default_angle = self.angle
+        self.default_scale = self.scale
+        self.default_color = self.color
 
 
 class Settlement(Unique):

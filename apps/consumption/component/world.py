@@ -17,16 +17,15 @@ if TYPE_CHECKING:
 
 class WorldProjection:
     def __init__(self) -> None:
-        # линейное смещение вдоль x и y
-        self.offset = Vec2()
+        self.offset = Vec3()
         # поворот вокруг z в градусах
         self.angle = 0
         self.scale = 1
 
         self.valid = False
 
-    def prepare(self, window: "Window") -> None:
-        self.offset = Vec2(*window.center)
+    def prepare(self, world: "World", window: "Window") -> None:
+        self.offset = Vec3(*window.center, world.size.z // 40 * 10)
 
 
 class World:
@@ -78,21 +77,39 @@ class World:
                 self.projection.offset.y + position.y * self.projection.scale
             )
             settlement.projection.angle = settlement.projection.default_angle - self.projection.angle
+            settlement.projection.scale = settlement.projection.default_scale * self.projection.scale
+            # todo: добавить "дымку" как в Dwarf Fortress над видимыми объектами
+            height = self.projection.offset.z - settlement.position.z
+            max_height = 100
+            visible = 0 <= height <= max_height
+            if settlement.projection.visible != visible:
+                settlement.projection.visible = visible
+            if visible:
+                coeff = (max_height - height) / max_height
+                settlement.projection.alpha = int(settlement.projection.default_color.a * coeff)
 
         self.connection_projections = ShapeElementList()
         for connection in self.connections:
             angle = math.radians(self.projection.angle)
             position = Vec2(connection.position.x, connection.position.y).rotate(angle) * self.projection.scale
-            for settlement in connection.settlements:
-                line = create_line(
-                    position.x + self.projection.offset.x,
-                    position.y + self.projection.offset.y,
-                    settlement.projection.center_x,
-                    settlement.projection.center_y,
-                    Color.ROAD,
-                    2
-                )
-                self.connection_projections.append(line)
+            height = self.projection.offset.z - connection.position.z
+            max_height = 100
+            visible = 0 <= height <= max_height
+            if visible:
+                color = list(Color.ROAD)
+                coeff = (max_height - height) / max_height
+                color[3] = int(color[3] * coeff)
+                for settlement in connection.settlements:
+                    # noinspection PyTypeChecker
+                    line = create_line(
+                        position.x + self.projection.offset.x,
+                        position.y + self.projection.offset.y,
+                        settlement.projection.center_x,
+                        settlement.projection.center_y,
+                        color,
+                        2
+                    )
+                    self.connection_projections.append(line)
 
         self.projection.valid = True
 
