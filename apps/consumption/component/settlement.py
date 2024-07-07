@@ -9,6 +9,12 @@ from apps.consumption.settings import Settings
 from core.texture import Texture
 
 
+class SettlementProjection(Sprite):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.default_angle = self.angle
+
+
 class Settlement(Unique):
     settings = Settings()
     images: dict[int, PIL.Image.Image] = {}
@@ -20,7 +26,7 @@ class Settlement(Unique):
         self.manufacturers: list[Manufacturer] = []
 
         texture = self.get_texture()
-        self.projection = Sprite(texture)
+        self.projection = SettlementProjection(texture)
 
     def get_texture(self) -> Texture:
         if self.stage not in self.images:
